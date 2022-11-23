@@ -1,0 +1,10 @@
+{
+  "name": "heimdall-layouts",
+  "version": "1.0.0",
+  "description": "heimdall layouts components",
+  "scripts": {
+    "start": "npx http-server -p 3006 -c1 -S -C assets/ssl/cert.pem -K assets/ssl/key.pem --cors"
+  },
+  "author": "janouma",
+  "license": "ISC"
+}
