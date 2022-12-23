@@ -1,95 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
-  <meta charset="utf-8">
-  <style>
-    body {
-      font-family: Avenir, Helvetica, Arial;
-      background: rgb(34,32,56);
-      color: #ebebeb;
-    }
-    
-    li {
-      list-style-type: none;
-      list-style-position: outside;
-      text-transform: capitalize;
-    }
-    
-    li:not(:last-child) {
-      margin-bottom: 1.25em;
-    }
-    
-    li::before {
-      content: "";
-      display: inline-block;
-      width: 1.93em;
-      aspect-ratio: 1;
-      background: var(--icon) no-repeat center/contain;
-      vertical-align: middle;
-      margin-right: 1em;
-    }
-  </style>
-  <script defer>
-    const layoutFolderPattern = /^([a-z0-9]+)(_[a-z0-9]+)*$/
-    
-	  async function init () {
-      const response = await fetch('layouts.json')
-      const layouts = await response.json()
-      
-      const verifiedLayouts = (await Promise.allSettled(layouts.map(verifyLayout)))
-        .filter(canLoadLayout)
-        .map(({ value }) => value)
-      
-		  const layoutsList = document.querySelector('.layouts')
-		  
-		  for (const layout of verifiedLayouts) {
-			  const node = document.createElement('li')
-			  node.textContent = layout?.name ?? getFolder(layout)
-        node.setAttribute('style', `--icon: url(layouts/${getFolder(layout)}/assets/images/icon.svg);`)
-			  layoutsList.appendChild(node)
-		  }
-	  }
-    
-    async function verifyLayout (layout) {
-      const folder = getFolder(layout)
-      
-      if (!folder.match(layoutFolderPattern)) {
-        throw new Error(folder + " doesn't match " + layoutFolderPattern)
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <style>
+      body {
+        font-family: Avenir, Helvetica, Arial;
+        background: rgb(34,32,56);
+        color: #ebebeb;
       }
       
-      const layoutPath = 'layouts/' + folder
-      
-      const responses = await Promise.all([
-        fetch(layoutPath + '/assets/images/icon.svg', { method: 'HEAD' }),
-        fetch(layoutPath + '/index.js', { method: 'HEAD' })
-      ])
-      
-      if (responses.every(response => response.ok)) {
-        return layout
+      body * {
+        box-sizing: border-box;
       }
       
-      throw new Error(responses.filter(response => !response.ok).map(response => 'failed to load resource ' + response.url))
-    }
-    
-    function canLoadLayout ({ status, reason }) {
-      if (reason) { console.error(reason) }
-      return status === 'fulfilled'
-    }
-    
-    function getFolder (layout) {
-      return layout.folder ?? layout
-    }
-
-    init()
-  </script>
-</head>
-
-<body>
-  <h1>Layouts</h1>
-  <ul class="layouts">
-  </ul>
-</body>
-
+      h1::first-letter {
+        text-transform: uppercase; 
+      }
+      
+      li {
+        list-style-type: none;
+        list-style-position: outside;
+        text-transform: capitalize;
+        white-space: nowrap;
+      }
+      
+      li:not(:last-child) {
+        margin-bottom: 1.25em;
+      }
+      
+      li > a {
+        text-decoration: none;
+        color: currentcolor;
+      }
+      
+      li > a::before {
+        content: "";
+        display: inline-block;
+        width: 1.93em;
+        aspect-ratio: 1;
+        background: var(--icon) no-repeat center/contain;
+        vertical-align: middle;
+        margin-right: 1em;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <h1>layouts</h1>
+    <ul class="layouts">
+    </ul>
+    <script type"module" src="index.js"></script>
+  </body>
 </html>
