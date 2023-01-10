@@ -1,7 +1,7 @@
 [
-	"dashboard",
-	{
-		"folder": "watch_list",
-		"name": "watch list"
-	}
+  {
+    "folder": "watch_list",
+    "name": "watch list"
+  },
+  "dashboard"
 ]

@@ -2,10 +2,73 @@
   "name": "heimdall-layouts",
   "version": "1.0.0",
   "description": "heimdall layouts components",
+  "type": "module",
   "scripts": {
+    "prepare": "husky install",
     "start": "npx http-server -p 3006 -c1 -S -C assets/ssl/cert.pem -K assets/ssl/key.pem --cors",
-    "startd": "npm start &> server.log &"
+    "startd": "npm start &> server.log &",
+    "lint": "eslint --no-error-on-unmatched-pattern",
+    "standalone-lint": "npm run lint -- \"{lib/**/*,scripts/**/*,src/**/*,index,playwright.config}.{js,svelte}\"",
+    "build": "node scripts/build"
   },
   "author": "janouma",
-  "license": "ISC"
+  "license": "ISC",
+  "volta": {
+    "node": "18.12.1"
+  },
+  "lint-staged": {
+    "{lib/**/*,scripts/**/*,src/**/*,index,playwright.config}.{js,svelte}": "npm run lint --"
+  },
+  "eslintConfig": {
+    "extends": [
+      "standard"
+    ],
+    "plugins": [
+      "svelte3"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "*.svelte"
+        ],
+        "rules": {
+          "import/first": "off",
+          "import/no-duplicates": "off",
+          "import/no-mutable-exports": "off",
+          "no-multiple-empty-lines": [
+            "error",
+            {
+              "max": 1,
+              "maxBOF": 2,
+              "maxEOF": 0
+            }
+          ]
+        },
+        "processor": "svelte3/svelte3"
+      }
+    ],
+    "settings": {
+      "svelte3/compiler-options": {
+        "customElement": true
+      }
+    }
+  },
+  "devDependencies": {
+    "@heimdall/utils": "^1.3.4",
+    "es6-template-strings": "^2.0.1",
+    "eslint": "^8.31.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-standard": "^5.0.0",
+    "eslint-plugin-svelte3": "^4.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.1.0",
+    "postcss": "^7.0.36",
+    "postcss-preset-env": "^6.7.0",
+    "shelljs": "^0.8.5",
+    "standard": "^17.0.0"
+  },
+  "dependencies": {
+    "loglevel": "^1.8.1",
+    "svelte": "^3.55.0"
+  }
 }
