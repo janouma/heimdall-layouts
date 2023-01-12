@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/heimdall-layouts/tests/index.css">
+    <style>
+      .wrapper {
+        max-width: 25em;
+        background-color: rgb(var(--space));
+      }
+    </style>
+    <script type="module" src="/heimdall-layouts/layouts/dashboard/item/index.js"></script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <hdl-dashboard-item></hdl-dashboard-item>
+    </div>
+    <script type="module">
+      import { applyParameters } from '/heimdall-layouts/tests/helpers/parameters.js'
+      
+      const item = document.querySelector('hdl-dashboard-item')
+      
+      applyParameters(item, {
+        title: 'bliss.js — heavenly javascript',
+        iconalt: 'icon of item'
+      })
+    </script>
+  </body>
+</html>

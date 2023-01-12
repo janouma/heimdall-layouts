@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head></head>
+  <body>
+    <script type="module">
+      import { isTestEnv } from '/heimdall-layouts/tests/helpers/env.js'
+      import { mockApiResponse } from '/heimdall-layouts/tests/helpers/api.js'
+      import renderLayout from '/heimdall-layouts/tests/helpers/layout.js'
+
+      if (!isTestEnv()) {
+        {
+          const response = await fetch('/heimdall-layouts/tests/fixtures/dashboard/last_items.json')
+          const lastItems = await response.json()
+      
+          mockApiResponse({
+            url: '/api/find-items',
+      
+            payload (url, options) {
+              const workspace = options?.body && JSON.parse(options.body).workspace
+      
+              if (workspace) {
+                const length = Math.round(Math.random() * 17) + 3
+      
+                return Array.from({ length }, () => {
+                  const itemIndex = Math.ceil(Math.random() * (lastItems.length - 1))
+                  return lastItems[itemIndex]
+                })
+              }
+      
+              return lastItems
+            }
+          })
+        }
+      
+        {
+          const response = await fetch('/heimdall-layouts/tests/fixtures/dashboard/config.json')
+          const config = await response.json()
+      
+          mockApiResponse({
+            url: '/api/get-config/dashboard',
+            payload: config
+          })
+        }
+      }
+      
+      renderLayout('dashboard')
+    </script>
+  </body>
+</html>

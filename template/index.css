@@ -1764,13 +1764,19 @@ a {
   overflow-y:auto;
   padding:0.25em 0 3.5em 0
 }
+.hdl-modal:nth-child(1n){
+  transition-property: scale, opacity, visibility;
+}
+.hdl-modal.not-visible {
+  scale: 1.25;
+}
 .hdl-modal .hdl-close {
   --size:1.07em;
   padding:0;
   background-repeat:no-repeat;
   width:var(--size);
   height:var(--size);
-  background-image:url(/close.d486d98f.svg);
+  background-image:url(close.d486d98f.svg);
   background-size:auto 100%;
   top:1.43em;
   right:1.48em;

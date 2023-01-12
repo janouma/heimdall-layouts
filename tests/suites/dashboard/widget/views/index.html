@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/heimdall-layouts/tests/index.css">
+    <style>
+      .wrapper {
+        display: inline-block;
+        padding: 1em;
+        background-color: #14074E;
+
+        background-image:
+          url(/tests/suites/dashboard/widget/views/assets/images/stars.png),
+          linear-gradient(-45deg, rgba(var(--sky), 50%), transparent);
+      }
+      
+      hdl-dashboard-widget {
+        max-width: 25em;
+      }
+    </style>
+    <script type="module" src="/heimdall-layouts/layouts/dashboard/widget/index.js"></script>
+    <script type="module">
+      import { isTestEnv } from '/heimdall-layouts/tests/helpers/env.js'
+      import { mockSetTimeout } from '/heimdall-layouts/tests/helpers/api.js'
+      import { applyParameters } from '/heimdall-layouts/tests/helpers/parameters.js'
+
+      if (isTestEnv()) {
+        mockSetTimeout()
+      }
+
+      const response = await fetch('/heimdall-layouts/tests/fixtures/dashboard/last_items.json')
+      const lastItems = await response.json()
+      const widget = document.createElement('hdl-dashboard-widget')
+      
+      widget.addEventListener('show-item-content', ({ detail: item }) => console.debug('show content for item:', item))
+      widget.addEventListener('remove', () => console.debug('remove'))
+    
+      applyParameters(widget, {
+        title: 'recently added',
+        maxVisible: 7,
+        items: lastItems,
+        readonly: '',
+    
+        messages: {
+          iconalt: 'Icon of item',
+          deletetitle: 'Unpin workspace'
+        }
+      })
+
+      document.querySelector('.wrapper').appendChild(widget)
+    </script>
+  </head>
+  <body>
+    <div class="wrapper"></div>
+  </body>
+</html>

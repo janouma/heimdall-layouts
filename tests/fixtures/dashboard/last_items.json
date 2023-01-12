@@ -1,0 +1,60 @@
+[
+  {
+    "$id": "bliss-js-id",
+    "title": "bliss.js — heavenly javascript",
+    "url": "https://blissfuljs.com/index.html"
+  },
+
+  {
+    "$id": "writesonic-id",
+    "title": "writesonic – best ai writer, copywritting and graphics creator",
+    "url": "https://writesonic.com",
+    "snapshot": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/writesonic_screenshot.png",
+    "icon": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/redmi_icon.ico"
+  },
+  
+  {
+    "$id": "runebook-id",
+    "title": "runebook.dev",
+    "url": "https://runebook.dev",
+    "snapshot": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/runebook_screenshot.png",
+    "icon": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/runebook_icon.ico"
+  },
+  
+  {
+    "$id": "vivliostyle-id",
+    "title": "vivliostyle — enjoy css type setting!",
+    "url": "https://vivliostyle.org",
+    "snapshot": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/vivliostyle_screenshot.png"
+  },
+  
+  {
+    "$id": "nano-id",
+    "title": "nano ID at evil martians",
+    "url": "https://evilmartians.com/opensource/nanoid",
+    "snapshot": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/nanoid_screenshot.png",
+    "icon": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/nanoid_icon.ico"
+  },
+  
+  {
+    "$id": "lightning-css-id",
+    "title": "lightning CSS",
+    "url": "https://lightningcss.dev",
+    "snapshot": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/lightningcss_screenshot.png",
+    "icon": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/lightningcss_icon.svg"
+  },
+  
+  {
+    "$id": "detect-firefox-css-id",
+    "title": "detect firefox in CSS",
+    "type": "css"
+  },
+
+  {
+    "$id": "neutralino-id",
+    "title": "build lightweight cross-platform desktop application",
+    "url": "https://neutralino.js.org",
+    "snapshot": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/neutralino_screenshot.png",
+    "icon": "/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/neutralino_icon.png"
+  }
+]

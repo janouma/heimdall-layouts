@@ -1,3 +1,8 @@
 node_modules
 *.log
 .cache
+/test-results/
+/test-snapshots/local/
+/playwright-report/
+/playwright/.cache/
+/heimdall-layouts/

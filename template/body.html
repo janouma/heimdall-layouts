@@ -2,7 +2,7 @@
   <div class="hdl-home animated relative border-box stretch animated">
     <heimdall-starfield speed="0.25" direction="forward" class="animated">
     </heimdall-starfield>
-    <div class="absolute stretch top-0 left-0 animated">
+    <main class="absolute stretch top-0 left-0 animated">
       <div class="hdl-explorer absolute border-box stretch flex items-center justify-center m0 p0 z0">
         <hdl-layout-placeholder class="absolute"></hdl-layout-placeholder>
       </div>
@@ -21,8 +21,12 @@
           <section></section>
         </side-menu>
       </div>
+    </main>
+    <div class="border-box flex hdl-modal stretch absolute left-0 top-0 z1 not-visible animated">
+      <div class="hdl-content"></div>
+      <button class="animated btn fixed hdl-close hover-fx"></button>
     </div>
-    <footer class="absolute hstretch center bold">
+    <footer class="absolute hstretch center bold z2">
       © 2016 Design Investigation
     </footer>
   </div>

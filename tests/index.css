@@ -1,0 +1,65 @@
+:root {
+  --eggshell: 235,235,235;
+  --purple: 40,16,98;
+  --mauve: 154,88,133;
+  --pinkred: 255,85,112;
+  --red: 255, 0, 0;
+  --gold: 187,183,76;
+  --silvergold: 237,233,126;
+  --sky: 88,146,246;
+  --deepsky: 20,48,151;
+  --space: 34,32,56;
+  --deepspace: 6,3,33;
+  --grass: 0,238,119;
+  --transluent: rgba(255,255,255,0.12);
+  --deepwater: 51,50,77;
+}
+
+@font-face {
+  font-family: 'Hasteristico';
+  src: url(assets/fonts/hasteristico-bold.woff) format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hasteristico';
+  src: url(assets/fonts/hasteristico-light.woff) format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'RobotoMono';
+  src: url(assets/fonts/roboto-mono-regular.woff) format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'RobotoMono';
+  src: url(assets/fonts/roboto-mono-light.woff) format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body,
+svg text {
+  font-family: 'Hasteristico';
+  letter-spacing: 0.05em;
+}
+
+body {
+  --font-color: rgb(var(--eggshell));
+  
+  background-color: rgb(var(--eggshell));
+  color: var(--font-color);
+}
+
+body * {
+  box-sizing: border-box;
+}
+
+svg text {
+  fill: var(--font-color);
+}

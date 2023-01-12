@@ -1,0 +1,12 @@
+{
+  "body": {
+    "recentlyAdded": "recently added",
+    "addWidget": "Pin a workspace",
+    "pickWorkspace": "pick a workspace"
+  },
+
+  "widget": {
+    "iconalt": "Icon for item",
+    "deletetitle": "Unpin workspace"
+  }
+}

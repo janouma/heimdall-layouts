@@ -16,7 +16,7 @@ async function init () {
     const layoutFolder = getFolder(layout)
 
     anchor.textContent = layout?.name ?? layoutFolder
-    anchor.setAttribute('href', 'layouts/' + layoutFolder)
+    anchor.setAttribute('href', `tests/suites/${layoutFolder}/main/views`)
     anchor.setAttribute('target', '_blank')
     anchor.setAttribute('style', `--icon: url(layouts/${getFolder(layout)}/assets/images/icon.svg);`)
 
