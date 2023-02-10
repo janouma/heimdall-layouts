@@ -9,6 +9,7 @@
   },
   "scripts": {
     "prepare": "husky install",
+    "postinstall": "ln -fs . heimdall-layouts",
     "start": "browser-sync start --server --https --cert assets/ssl/cert.pem --key assets/ssl/key.pem --port $npm_package_config_devPort --no-open --no-ui --cors --reload-debounce --files '{lib/**/*,layouts/**/*,tests/**/@(views|assets|helpers)/**/*,tests/*,index}.{js,cjs,mjs,html,css,png,jpg,svg}'",
     "start:test": "npx http-server -p $npm_package_config_testPort -c1 -S -C assets/ssl/cert.pem -K assets/ssl/key.pem --cors",
     "startd": "npm start &> server.log &",
