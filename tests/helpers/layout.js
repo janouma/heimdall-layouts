@@ -1,15 +1,23 @@
 import * as layoutContext from './layout_context.js'
+import { createResolver } from '../../lib/path.js'
 
-const head = fetch('/heimdall-layouts/template/head.html')
+const resolvePath = createResolver(import.meta.url)
+
+const head = fetch(resolvePath('../../template/head.html'))
   .then(response => response.text())
 
-const body = fetch('/heimdall-layouts/template/body.html')
+const body = fetch(resolvePath('../../template/body.html'))
   .then(response => response.text())
 
 export default async function renderLayout (layout) {
   document.documentElement.classList.add('development')
   document.head.innerHTML = await head
   document.body.innerHTML = await body
+
+  const styleLink = document.createElement('link')
+  styleLink.setAttribute('rel', 'stylesheet')
+  styleLink.setAttribute('href', resolvePath('../../template/index.css'))
+  document.head.appendChild(styleLink)
 
   document.querySelector('.hdl-modal > .hdl-close').addEventListener(
     'click',
@@ -57,7 +65,7 @@ export default async function renderLayout (layout) {
     }
   })
 
-  await import(`/heimdall-layouts/layouts/${layout}/index.js`)
+  await import(`../../layouts/${layout}/index.js`)
 
   const layoutComponent = document.createElement('hdl-' + layout)
   layoutComponent.classList.add('absolute')

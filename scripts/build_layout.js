@@ -1,5 +1,5 @@
 import shell from 'shelljs'
-import { join, basename } from 'path'
+import { join } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import argsUtils from '@heimdall/utils/args'
 
@@ -36,20 +36,23 @@ console.debug('statics:', statics)
 shell.cp('-R', statics, destination)
 
 const componentsDir = join(source, 'components')
-const components = shell.find(join(componentsDir, '*')).filter(file => file.match(new RegExp(`^${componentsDir}/(header|body)$`)))
+
+const components = [
+  'header',
+  'body'
+].filter(component => existsSync(join(componentsDir, component)))
 
 console.debug('components:', components)
 
 const indexStatements = []
 
 for (const component of components) {
-  const compileResult = shell.exec(`utils-compile-svelte source="${component}" destination="${destination}" prefix="/heimdall-layouts/${destination}/"`)
+  const compileResult = shell.exec(`npm run build:component -- component=${args.layout}/${component}`)
 
   if (compileResult.code > 0) {
     throw new Error('failed to compile component ' + component)
   } else {
-    indexStatements.push(`import './${basename(component)}/index.js'`)
-    console.info('successfully compiled component ' + component)
+    indexStatements.push(`import './${component}/index.js'`)
   }
 }
 

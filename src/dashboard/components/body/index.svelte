@@ -7,6 +7,7 @@
   import 'joi'
   import { onMount, onDestroy, tick } from 'svelte'
   import { createValidator } from '^/lib/validation.js'
+  import { createResolver } from '^/lib/path.js'
   import loglevelPlaceholder from '^/lib/loglevel_placeholder.js'
   import '../widget/index.svelte'
   import '../add_widget/index.svelte'
@@ -17,6 +18,7 @@
   const staticVars = { log: loglevelPlaceholder.getLogger() }
   const { joi } = window
   const validate = createValidator(componentDisplayName)
+  const resolvePath = createResolver(import.meta.url)
 
   export let layoutContext
 
@@ -108,8 +110,7 @@
   }
 
   async function getMessages () {
-    const { origin } = new URL(import.meta.url)
-    const response = await fetch(origin + '/heimdall-layouts/layouts/dashboard/assets/messages.json')
+    const response = await fetch(resolvePath('../assets/messages.json'))
     return response.json()
   }
 

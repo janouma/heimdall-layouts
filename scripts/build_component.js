@@ -25,7 +25,8 @@ const componentDestinationPath = join(destination, component)
 
 shell.mkdir('-p', componentDestinationPath)
 
-const compileResult = shell.exec(`utils-compile-svelte source="${source}" destination="${destination}" prefix="/heimdall-layouts/${destination}/"`)
+const prefix = process.env.npm_package_config_prefix ? `/${process.env.npm_package_config_prefix}` : ''
+const compileResult = shell.exec(`utils-compile-svelte source="${source}" destination="${destination}" prefix="${prefix}/${destination}"`)
 
 if (compileResult.code > 0) {
   throw new Error('failed to compile component ' + args.component)

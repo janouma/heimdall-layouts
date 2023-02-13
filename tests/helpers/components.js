@@ -14,12 +14,12 @@ export function getComponentHelpers ({ layout, component } = {}) {
         )
         : params
 
-      return `/heimdall-layouts/tests/suites/${layout}/${component}/views/?env=playwright&params=${encodeURIComponent(JSON.stringify(parsedParams))}`
+      return `/tests/suites/${layout}/${component}/views/?env=playwright&params=${encodeURIComponent(JSON.stringify(parsedParams))}`
     },
 
     getComponentAssetPath (asset) {
       if (!asset) { throw new Error('asset argument is missing') }
-      return `/heimdall-layouts/tests/suites/${layout}/${component}/views/assets/${asset}`
+      return `/tests/suites/${layout}/${component}/views/assets/${asset}`
     },
 
     getScreenshotPath (useCase, name = 'screenshot') {

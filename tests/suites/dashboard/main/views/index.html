@@ -3,13 +3,13 @@
   <head></head>
   <body>
     <script type="module">
-      import { isTestEnv } from '/heimdall-layouts/tests/helpers/env.js'
-      import { mockApiResponse } from '/heimdall-layouts/tests/helpers/api.js'
-      import renderLayout from '/heimdall-layouts/tests/helpers/layout.js'
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { mockApiResponse } from '../../../../helpers/api.js'
+      import renderLayout from '../../../../helpers/layout.js'
 
       if (!isTestEnv()) {
         {
-          const response = await fetch('/heimdall-layouts/tests/fixtures/dashboard/last_items.json')
+          const response = await fetch('../../../../fixtures/dashboard/last_items.json')
           const lastItems = await response.json()
       
           mockApiResponse({
@@ -33,7 +33,7 @@
         }
       
         {
-          const response = await fetch('/heimdall-layouts/tests/fixtures/dashboard/config.json')
+          const response = await fetch('../../../../fixtures/dashboard/config.json')
           const config = await response.json()
       
           mockApiResponse({

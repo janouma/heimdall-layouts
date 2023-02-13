@@ -374,7 +374,7 @@ test('workspaces limit', async ({ page, lastItems, config }) => {
     type: 'module',
 
     content: `
-      import { state } from '/heimdall-layouts/tests/helpers/layout_context.js'
+      import { state } from '../../../../helpers/layout_context.js'
       state.workspaces.set([${workspaces.join(',')}])
     `
   })

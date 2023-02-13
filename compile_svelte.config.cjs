@@ -36,7 +36,7 @@ module.exports = {
     },
 
     ...libs.reduce((merged, lib) => Object.assign(merged, {
-      ['\\^/lib/' + lib]: {
+      ['^/lib/' + lib]: {
         alias: '../../lib/' + lib,
         copyModule: false
       }

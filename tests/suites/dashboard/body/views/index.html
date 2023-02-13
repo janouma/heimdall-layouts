@@ -3,13 +3,13 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
     <meta charset="utf-8">
-    <link rel="stylesheet" href="/heimdall-layouts/tests/index.css">
-    <script type="module" src="/heimdall-layouts/layouts/dashboard/body/index.js"></script>
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/dashboard/body/index.js"></script>
     <script type="module">
-      import { isTestEnv } from '/heimdall-layouts/tests/helpers/env.js'
-      import { mockApiResponse, mockMathRandom } from '/heimdall-layouts/tests/helpers/api.js'
-      import { applyParameters } from '/heimdall-layouts/tests/helpers/parameters.js'
-      import * as layoutContext from '/heimdall-layouts/tests/helpers/layout_context.js'
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { mockApiResponse, mockMathRandom } from '../../../../helpers/api.js'
+      import { applyParameters } from '../../../../helpers/parameters.js'
+      import * as layoutContext from '../../../../helpers/layout_context.js'
 
       if (isTestEnv()) {
         mockMathRandom(0.1, 0.2, 1, 0.9, 0.5, 0.6)
@@ -17,7 +17,7 @@
 
       if (!isTestEnv()) {
         {
-          const response = await fetch('/heimdall-layouts/tests/fixtures/dashboard/last_items.json')
+          const response = await fetch('../../../../fixtures/dashboard/last_items.json')
           const lastItems = await response.json()
           
           mockApiResponse({
@@ -41,7 +41,7 @@
         }
 
         {
-          const response = await fetch('/heimdall-layouts/tests/fixtures/dashboard/config.json')
+          const response = await fetch('../../../../fixtures/dashboard/config.json')
           const config = await response.json()
         
           mockApiResponse({
