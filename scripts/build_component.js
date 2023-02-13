@@ -25,8 +25,7 @@ const componentDestinationPath = join(destination, component)
 
 shell.mkdir('-p', componentDestinationPath)
 
-const prefix = process.env.npm_package_config_prefix ? `/${process.env.npm_package_config_prefix}` : ''
-const compileResult = shell.exec(`utils-compile-svelte source="${source}" destination="${destination}" prefix="${prefix}/${destination}"`)
+const compileResult = shell.exec(`utils-compile-svelte source="${source}" destination="${destination}"`)
 
 if (compileResult.code > 0) {
   throw new Error('failed to compile component ' + args.component)
