@@ -56,12 +56,12 @@ test('overflowed widget', async ({ page, context }) => {
 })
 
 test('not overflowed widget', async ({ page }) => {
-  await page.goto(getComponentUrl({ params: { maxVisible: 8 } }))
+  await page.goto(getComponentUrl({ params: { maxvisible: 8 } }))
   await expect(page.locator('css=.wrapper')).toHaveScreenshot(getScreenshotPath('not-overflowed'))
 })
 
 test('widget without item limit', async ({ page }) => {
-  await page.goto(getComponentUrl({ params: { maxVisible: undefined } }))
+  await page.goto(getComponentUrl({ params: { maxvisible: undefined } }))
   await expect(page.locator('css=.wrapper')).toHaveScreenshot(getScreenshotPath('without-item-limit'))
 })
 

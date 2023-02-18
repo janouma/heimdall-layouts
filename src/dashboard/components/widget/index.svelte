@@ -12,7 +12,7 @@
   export let title
   export let items
   export let messages
-  export let maxVisible
+  export let maxvisible
   export let readonly
 
   let list
@@ -23,7 +23,7 @@
   const validate = createValidator('dashboard/widget')
   
   $: validate(title, 'title', joi.string())
-  
+
   $: validate(
     items,
     'items',
@@ -45,9 +45,9 @@
     deletetitle: joi.string().required()
   }))
   
-  $: validate(maxVisible, 'maxVisible', joi.number().integer())
+  $: validate(maxvisible, 'maxvisible', joi.number().integer())
 
-  $: overflowed = maxVisible < items?.length
+  $: overflowed = maxvisible < items?.length
 
   // eslint-disable-next-line eqeqeq
   $: editable = readonly == undefined
@@ -262,7 +262,7 @@
   class="animated"
   class:overflowed={overflowed}
   class:marked-for-delete={editable && deleteVisible}
-  style:--max-visible={maxVisible}
+  style:--max-visible={maxvisible}
   use:onLongTouch={editable && showRemoveButton}
 >
   <li>

@@ -5,7 +5,7 @@
 
 <script>
   import 'joi'
-  import { onMount, onDestroy, tick } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import { createValidator } from '^/lib/validation.js'
   import { createResolver } from '^/lib/path.js'
   import loglevelPlaceholder from '^/lib/loglevel_placeholder.js'
@@ -23,10 +23,9 @@
   export let layoutContext
 
   let lastItems = getItemsPlaceholders()
-  let lastItemsWidget
   let pined
   let messages
-  let pinedWidgetsProps
+  let pinedWidgets
 
   $: session = layoutContext?.state.session
   $: workspaces = layoutContext?.state.workspaces
@@ -39,13 +38,6 @@
   $: limitReached = pined?.length >= MAX_PINED || notPined?.length === 0
 
   $: validate(layoutContext, 'layoutContext', joi.object().unknown())
-
-  $: if (lastItemsWidget) {
-    Object.assign(lastItemsWidget, {
-      items: lastItems,
-      messages: messages?.widget
-    })
-  }
 
   $: staticVars.log = layoutContext?.log.getLogger('layout/' + componentDisplayName)
 
@@ -66,7 +58,7 @@
     layoutContext.sseClient.onConnect(updatePined)
   }
 
-  $: if (pined) { updatePinedWidgetsProps() }
+  $: if (pined) { updatePinedWidgets() }
 
   onMount(async () => {
     messages = await getMessages()
@@ -137,7 +129,7 @@
     if (type === 'itemsUpdate') {
       return Promise.all([
         updateLastItems(),
-        updatePinedWidgets()
+        updatePinedWidgetsData()
       ])
     }
   }
@@ -156,50 +148,20 @@
     return config?.pined
   }
 
-  async function updatePinedWidgetsProps () {
-    const pinedCountDiff = pined.length - getPinedWidgets().length
+  async function updatePinedWidgets () {
+    const pinedCountDiff = pined.length - (pinedWidgets?.length ?? 0)
 
     if (Math.abs(pinedCountDiff) > 0) {
-      pinedWidgetsProps ??= []
-      const propsByTitle = groupBy('title', pinedWidgetsProps)
+      pinedWidgets ??= []
+      const propsByTitle = groupBy('title', pinedWidgets)
 
-      pinedWidgetsProps = pined.map((title, index) => ({
+      pinedWidgets = pined.map((title, index) => ({
         title,
         items: propsByTitle[title]?.items ?? getItemsPlaceholders()
       }))
-
-      await tick()
-      initPinedWidgets()
     }
 
-    return updatePinedWidgets()
-  }
-  
-  function getPinedWidgets () {
-    return Array.from(lastItemsWidget?.parentNode.querySelectorAll('.pined'))
-  }
-  
-  function initPinedWidgets () {
-    getPinedWidgets().forEach((pinedWidget, index) => Object.assign(pinedWidget, {
-      maxVisible: 10,
-      items: pinedWidgetsProps[index].items,
-      messages: messages?.widget
-    }))
-  }
-
-  async function updatePinedWidgets () {
-    const pinedWidgetsByTitle = groupBy('title', getPinedWidgets())
-
-    for await (const fetchedProps of pined.map(getSingleWidgetProps)) {
-      if (fetchedProps) {
-        const { title, items } = fetchedProps
-
-        pinedWidgetsProps = pinedWidgetsProps
-          .map(props => title !== props.title ? props : fetchedProps)
-
-        pinedWidgetsByTitle[title].items = items
-      }
-    }
+    return updatePinedWidgetsData()
   }
 
   function groupBy (prop, array) {
@@ -212,7 +174,18 @@
     )
   }
 
-  async function getSingleWidgetProps (workspace) {
+  async function updatePinedWidgetsData () {
+    for await (const fetchedProps of pined.map(getPinedWidgetData)) {
+      if (fetchedProps) {
+        const { title } = fetchedProps
+
+        pinedWidgets = pinedWidgets
+          .map(props => title !== props.title ? props : fetchedProps)
+      }
+    }
+  }
+
+  async function getPinedWidgetData (workspace) {
     try {
       const response = await fetch('/api/find-items', {
         method: 'POST',
@@ -347,17 +320,21 @@
 
 <div class="viewport">
   <hdl-dashboard-widget
-    bind:this={lastItemsWidget}
     title={messages?.body.recentlyAdded ?? getTitlePlaceholder(35)}
+    items={lastItems}
+    messages={messages?.widget}
     on:show-item-content={showItemContent}
     readonly
   ></hdl-dashboard-widget>
 
-  {#if pinedWidgetsProps?.length > 0}
-    {#each pinedWidgetsProps as { title }}
+  {#if pinedWidgets?.length > 0}
+    {#each pinedWidgets as { title, items }}
       <hdl-dashboard-widget
         class="pined"
         {title}
+        {items}
+        messages={messages?.widget}
+        maxvisible={10}
         on:show-item-content={showItemContent}
         on:remove={unPinWorkspace(title)}
       ></hdl-dashboard-widget>
