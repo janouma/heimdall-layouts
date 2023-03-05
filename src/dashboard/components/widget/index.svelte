@@ -122,7 +122,7 @@
       --max-height: calc(var(--header-height) + var(--max-visible) * (var(--item-height) + var(--gap)) - var(--gap));
       
       overflow: auto;
-      overscroll-behavior: contain;
+      overscroll-behavior: none;
       max-height: var(--max-height);
     }
 
@@ -135,9 +135,14 @@
   li {
     scroll-snap-align: start;
 
+    &:not(:first-child):nth-child(2n + 1) {
+      background-color: rgba(var(--eggshell), 25%);
+    }
+
     &:first-child {
-      padding: 0.556em 0.65em;
-      background-color: rgba(var(--deepwater), 75%);
+      padding: 0.556em 1em;
+      background-color: rgba(var(--silvergold), 75%);
+      color: rgb(var(--purple));
       position: sticky;
       box-sizing: border-box;
       top: 0;
@@ -184,14 +189,26 @@
       }
     }
   }
-  
+
   h2 {
-    text-transform: capitalize;
+    text-transform: uppercase;
+    letter-spacing: 0.075em;
     margin: 0;
     line-height: 1;
     white-space: pre;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: flex;
+
+    & > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      display: inline-block;
+      font-size: 0.75em;
+
+      &::first-letter {
+        font-size: 1.25em;
+      }
+    }
   }
   
   a,
@@ -210,40 +227,40 @@
     border: none;
     font-family: inherit;
     font-size: inherit;
+    background-color: transparent;
   }
 
   .delete {
+    --right-margin: 0.6em;
+    
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    right: 0.4em;
-    width: 1em;
+    right: var(--right-margin);
+    width: 1.5em;
     aspect-ratio: 1;
     background-color: rgb(var(--red));
-    border: 1px solid rgb(var(--eggshell));
     border-radius: 50%;
     font-weight: bold;
     display: flex;
     justify-content: center;
     align-items: center;
+    color: rgb(var(--eggshell));
 
     &::before {
-      --expanse: 50%;
-    
       content: '';
       position: absolute;
       width: 100%;
       aspect-ratio: 1;
-      top: 0;
-      left: 0;
+      top: calc(-1 * var(--right-margin));
+      left: calc(-1 * var(--right-margin));
       border-radius: 50%;
-      margin: calc(-1 * var(--expanse));
-      padding: var(--expanse);
+      border: solid var(--right-margin) transparent;
     }
 
     &::after {
       content: '';
-      height: 0.125em;
+      height: 0.1875em;
       width: 65%;
       background-color: currentColor;
     }
@@ -267,16 +284,16 @@
 >
   <li>
     <h2>
-      {title}
-      {#if editable}
-        <button
-          title={messages?.deletetitle}
-          class="delete animated hover-fx not-visible"
-          class:visible={deleteVisible}
-          on:click={notifyRemoval}
-        ></button>
-      {/if} 
+      <span>{title}</span>
     </h2>
+    {#if editable}
+      <button
+        title={messages?.deletetitle}
+        class="delete animated hover-fx not-visible"
+        class:visible={deleteVisible}
+        on:click={notifyRemoval}
+      ></button>
+    {/if} 
   </li>
 
   {#if items?.length > 0}
