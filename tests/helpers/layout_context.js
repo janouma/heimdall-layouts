@@ -5,7 +5,8 @@ export const actions = {
   findItems () {},
   countItems () {},
   getTimeline () {},
-  updateSearchResults () {}
+  updateSearchResults () {},
+  getUnconnectedNeighbors () {}
 }
 
 export const mutations = {

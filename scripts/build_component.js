@@ -5,15 +5,15 @@ import argsUtils from '@heimdall/utils/args'
 
 const args = argsUtils.argsArrayToArgsObject()
 
-if (!args.component?.trim()) {
+if (!args.name?.trim()) {
   throw new Error('"component" argument is missing')
 }
 
-if (!args.component.match(/^[\w_]+\/[\w_]+$/)) {
-  throw new Error(`"component" path is not valid (expected layout/component, actual ${args.component})`)
+if (!args.name.match(/^[\w_]+\/[\w_]+$/)) {
+  throw new Error(`"component" path is not valid (expected layout/component, actual ${args.name})`)
 }
 
-const [layout, component] = args.component.split('/')
+const [layout, component] = args.name.split('/')
 const source = join('src', layout, 'components', component)
 
 if (!existsSync(source)) {
@@ -28,7 +28,7 @@ shell.mkdir('-p', componentDestinationPath)
 const compileResult = shell.exec(`utils-compile-svelte source="${source}" destination="${destination}"`)
 
 if (compileResult.code > 0) {
-  throw new Error('failed to compile component ' + args.component)
+  throw new Error('failed to compile component ' + args.name)
 } else {
-  console.info('successfully compiled component ' + args.component)
+  console.info('successfully compiled component ' + args.name)
 }

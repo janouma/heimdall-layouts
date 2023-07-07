@@ -18,9 +18,12 @@
     "lint": "eslint --no-error-on-unmatched-pattern",
     "standalone-lint": "npm run lint -- '{tests/**/*,lib/**/*,scripts/**/*,src/**/*,index,playwright.config}.{js,cjs,mjs,svelte}'",
     "test": "npx playwright test",
+    "create:layout": "node scripts/create_layout",
     "build:layout": "node scripts/build_layout",
+    "create:component": "node scripts/create_component",
     "build:component": "node scripts/build_component",
-    "watch:component": "node scripts/watch_component"
+    "watch:component": "node scripts/watch_component",
+    "create:component-test": "node scripts/create_component_test"
   },
   "author": "janouma",
   "license": "ISC",
@@ -65,6 +68,7 @@
     }
   },
   "devDependencies": {
+    "@apexearth/egrep": "^1.0.9",
     "@playwright/test": "^1.29.2",
     "browser-sync": "^2.27.11",
     "es6-template-strings": "^2.0.1",
@@ -72,6 +76,7 @@
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-standard": "^5.0.0",
     "eslint-plugin-svelte3": "^4.0.0",
+    "fs-extra": "^11.1.1",
     "husky": "^8.0.3",
     "lint-staged": "^13.1.0",
     "nodemon": "^2.0.20",
@@ -81,8 +86,8 @@
     "standard": "^17.0.0"
   },
   "dependencies": {
-    "@heimdall/utils": "^2.0.0",
     "@heimdall/shared-lib": "^1.2.2",
+    "@heimdall/utils": "^2.0.0",
     "joi": "^17.7.0",
     "loglevel": "^1.8.1",
     "svelte": "^3.55.0"

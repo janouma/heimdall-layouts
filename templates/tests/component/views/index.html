@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/${__LAYOUT_FOLDER__}/${__COMPONENT_FOLDER__}/index.js"></script>
+    <script type="module">
+      import { applyParameters } from '../../../../helpers/parameters.js'
+      import * as layoutContext from '../../../../helpers/layout_context.js'
+
+      const component = document.createElement('hdl-${__LAYOUT_FOLDER__.replaceAll("_", "-")}${__COMPONENT_FOLDER__ !== "body" ? "-" + __COMPONENT_FOLDER__.replaceAll("_", "-") : ""}')
+      applyParameters(component, { layoutContext })
+      document.body.appendChild(component)
+    </script>
+
+    <style>
+      body {
+        background-color: rgb(var(--space));
+      }
+    </style>
+  </head>
+  <body></body>
+</html>
