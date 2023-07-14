@@ -1,0 +1,5 @@
+{
+  "body": {
+    "title": "${__LAYOUT_NAME__}"
+  }
+}

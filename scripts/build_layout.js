@@ -4,24 +4,25 @@ import { existsSync, readFileSync, writeFileSync } from 'fs'
 import argsUtils from '@heimdall/utils/args'
 
 const args = argsUtils.argsArrayToArgsObject()
+const layoutName = args.name?.trim()
 
-if (!args.layout?.trim()) {
+if (!layoutName) {
   throw new Error('"layout" argument is missing')
 }
 
-const testMainViewPath = join('tests', 'suites', 'dashboard', 'main', 'views', 'index.html')
+const testMainViewPath = join('tests', 'suites', layoutName, 'main', 'views', 'index.html')
 if (!existsSync(testMainViewPath)) {
   throw new Error(`test view ${testMainViewPath} is missing`)
 }
 
 const mainLayoutsDescriptor = JSON.parse(readFileSync('layouts.json'))
-const source = join('src', args.layout)
+const source = join('src', layoutName)
 
 if (!existsSync(source)) {
   throw new Error(`"${source}" layout doesn't exist`)
 }
 
-const destination = join('layouts', args.layout)
+const destination = join('layouts', layoutName)
 
 if (existsSync(destination)) {
   shell.rm('-rf', destination)
@@ -47,7 +48,7 @@ console.debug('components:', components)
 const indexStatements = []
 
 for (const component of components) {
-  const compileResult = shell.exec(`npm run build:component -- component=${args.layout}/${component}`)
+  const compileResult = shell.exec(`npm run build:component -- name=${layoutName}/${component}`)
 
   if (compileResult.code > 0) {
     throw new Error('failed to compile component ' + component)
@@ -59,8 +60,8 @@ for (const component of components) {
 writeFileSync(join(destination, 'index.js'), indexStatements.join('\n') + '\n')
 
 const layoutDescriptorPath = join(source, 'layout.json')
-const layoutDescriptor = existsSync(layoutDescriptorPath) ? JSON.parse(readFileSync(layoutDescriptorPath)) : args.layout
-const updatedMainLayoutsDescriptor = mainLayoutsDescriptor.filter(descriptor => ![descriptor.folder, descriptor].includes(args.layout))
+const layoutDescriptor = existsSync(layoutDescriptorPath) ? JSON.parse(readFileSync(layoutDescriptorPath)) : layoutName
+const updatedMainLayoutsDescriptor = mainLayoutsDescriptor.filter(descriptor => ![descriptor.folder, descriptor].includes(layoutName))
 
 updatedMainLayoutsDescriptor.push(layoutDescriptor)
 writeFileSync('layouts.json', JSON.stringify(updatedMainLayoutsDescriptor, undefined, 2) + '\n')

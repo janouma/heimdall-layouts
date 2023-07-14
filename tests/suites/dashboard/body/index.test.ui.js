@@ -42,8 +42,7 @@ const workspaces = [
 
 const {
   getComponentUrl,
-  getScreenshotPath/* ,
-  tag */
+  getScreenshotPath
 } = getComponentHelpers({ layout, component })
 
 test('body loading last items', async ({ page }) => {

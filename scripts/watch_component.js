@@ -5,28 +5,30 @@ import argsUtils from '@heimdall/utils/args'
 
 const args = argsUtils.argsArrayToArgsObject()
 
-if (!args.component?.trim()) {
+if (!args.name?.trim()) {
   throw new Error('"component" argument is missing')
 }
 
-if (!args.component.match(/^[\w_]+\/[\w_]+$/)) {
-  throw new Error(`"component" path is not valid (expected layout/component, actual ${args.component})`)
+if (!args.name.match(/^[\w_]+\/[\w_]+$/)) {
+  throw new Error(`"component" path is not valid (expected layout/component, actual ${args.name})`)
 }
 
-const [layout, component] = args.component.split('/')
-const source = join('src', layout, 'components', component)
+const [layout, component] = args.name.split('/')
+const layoutSource = join('src', layout)
+const source = join(layoutSource, 'components', component)
 
 if (!existsSync(source)) {
   throw new Error(`"${source}" component doesn't exist`)
 }
-const watchCommand = `nodemon -e js,svelte,png,svg,jpg,json --delay 0.5 --watch ${source} --exec "npm run build:component -- component=${layout}/${component}"`
+
+const watchCommand = `nodemon -e js,svelte,png,svg,jpg,json --delay 0.5 --watch ${layoutSource} --exec "npm run build:component -- name=${layout}/${component}"`
 
 console.debug('watch command:', watchCommand)
 
 const watch = shell.exec(watchCommand)
 
 if (watch.code > 0) {
-  throw new Error('failed to watch component ' + args.component)
+  throw new Error('failed to watch component ' + args.name)
 } else {
-  console.info('successfully watched component ' + args.component)
+  console.info('successfully watched component ' + args.name)
 }

@@ -3,10 +3,10 @@ import { createResolver } from '../../lib/path.js'
 
 const resolvePath = createResolver(import.meta.url)
 
-const head = fetch(resolvePath('../../template/head.html'))
+const head = fetch(resolvePath('../../templates/preview/head.html'))
   .then(response => response.text())
 
-const body = fetch(resolvePath('../../template/body.html'))
+const body = fetch(resolvePath('../../templates/preview/body.html'))
   .then(response => response.text())
 
 export default async function renderLayout (layout) {
@@ -16,7 +16,7 @@ export default async function renderLayout (layout) {
 
   const styleLink = document.createElement('link')
   styleLink.setAttribute('rel', 'stylesheet')
-  styleLink.setAttribute('href', resolvePath('../../template/index.css'))
+  styleLink.setAttribute('href', resolvePath('../../templates/preview/index.css'))
   document.head.appendChild(styleLink)
 
   document.querySelector('.hdl-modal > .hdl-close').addEventListener(
@@ -67,12 +67,13 @@ export default async function renderLayout (layout) {
 
   await import(`../../layouts/${layout}/index.js`)
 
-  const layoutComponent = document.createElement('hdl-' + layout)
+  const tagName = layout.replaceAll('_', '-')
+  const layoutComponent = document.createElement('hdl-' + tagName)
   layoutComponent.classList.add('absolute')
   layoutComponent.layoutContext = layoutContext
   document.querySelector('hdl-layout-placeholder').replaceWith(layoutComponent)
 
-  const layoutHeaderComponentTag = `hdl-${layout}-header`
+  const layoutHeaderComponentTag = `hdl-${tagName}-header`
 
   if (window.customElements.get(layoutHeaderComponentTag)) {
     const layoutHeaderComponent = document.createElement(layoutHeaderComponentTag)
