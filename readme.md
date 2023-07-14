@@ -2,7 +2,7 @@
 Development and hosting of heimdall add-ons
 
 ## Requirements
-To be able to install and run this project, it is necessary to have access to `@heimall` scoped private packages. To do so one must setup the `@heimdall:registry` npm config property:
+To be able to install and run this project, it is necessary to have access to `@heimdall` scoped private packages. To do so one must setup the `@heimdall:registry` npm config property:
 
 ```bash
 npm config set @heimdall:registry <heimdall private registry url>
