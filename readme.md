@@ -180,7 +180,7 @@ Special `body` and `header` components get injected a `layoutContext` property w
   </tbody>
 </table>
 
-_Refer to server api documentation for details_
+_[Refer to server api documentation for details](https://janouma.github.io/heimdall-layouts/doc/api)_
 
 _**(1)** [see **state**👇🏾](#state)_
 
@@ -443,3 +443,5 @@ To run the test, use the following command:
 ```bash
 npm test -- <layout name>/<component name>
 ```
+
+## [Api documentation](https://janouma.github.io/heimdall-layouts/doc/api)
