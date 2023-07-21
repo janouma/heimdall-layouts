@@ -7,10 +7,21 @@
     <script type="module" src="../../../../../layouts/${__LAYOUT_FOLDER__}/${__COMPONENT_FOLDER__}/index.js"></script>
     <script type="module">
       import { applyParameters } from '../../../../helpers/parameters.js'
-      import * as layoutContext from '../../../../helpers/layout_context.js'
+      ${__COMPONENT_FOLDER__ === 'body' ? "import * as layoutContext from '../../../../helpers/layout_context.js'" : ''}
 
       const component = document.createElement('hdl-${__LAYOUT_FOLDER__.replaceAll("_", "-")}${__COMPONENT_FOLDER__ !== "body" ? "-" + __COMPONENT_FOLDER__.replaceAll("_", "-") : ""}')
-      applyParameters(component, { layoutContext })
+      
+      applyParameters(
+        component,
+        {
+          ${
+            __COMPONENT_FOLDER__ === 'body'
+            ? 'layoutContext'
+            : "title: '" + __COMPONENT_FOLDER__.replaceAll("_", " ") + "'"
+          }
+        }
+      )
+
       document.body.appendChild(component)
     </script>
 
