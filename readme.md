@@ -235,6 +235,11 @@ _**(1)** [see **state**👇🏾](#state)_
       <td>Set all search params at once</td>
       <td>search – Search<sup>(1)</sup></td>
     </tr>
+    <tr>
+      <td>switchToDefaultLayout</td>
+      <td>Set current layout to 'default'</td>
+      <td>&nbsp;</td>
+    </tr>
   </tbody>
 </table>
 
@@ -357,10 +362,6 @@ Remove application level event listener
     </tr>
   </tbody>
 </table>
-
-#### `log`
-
-The application log object _– of type [loglevel](https://github.com/pimterry/loglevel)_
 
 ### <a name="types">Types</a>
 

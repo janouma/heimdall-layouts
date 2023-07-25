@@ -1445,7 +1445,7 @@ a {
   border:1px solid rgb(var(--eggshell));
   background:black
 }
-.hdl-search-bar .hdl-search-completion user-tag {
+.hdl-search-bar .hdl-search-completion user-tag-stub {
   cursor:pointer;
 }
 .hdl-search-bar .hdl-search-completion > span > *:not(:last-child) {
@@ -1628,23 +1628,23 @@ a {
 }.hdl-connection {
   margin-bottom:0.54em
 }
-.hdl-connection > user-tag {
+.hdl-connection > user-tag-stub {
   font-size:1.5em
 }
 @media (hover:none) {
-  .hdl-connection > user-tag,.hdl-connection > user-tag + * {
+  .hdl-connection > user-tag-stub,.hdl-connection > user-tag-stub + * {
   font-size:2em;
 }
-}.hdl-connection > user-tag[readonly] {
+}.hdl-connection > user-tag-stub[readonly] {
   opacity:75%;
 }
-.hdl-connection > user-tag.pending {
+.hdl-connection > user-tag-stub.pending {
   color:rgb(var(--gold))
 }
-.high-contrast .hdl-connection > user-tag.pending {
+.high-contrast .hdl-connection > user-tag-stub.pending {
   font-style:italic
 }
-.hdl-connection > user-tag + * {
+.hdl-connection > user-tag-stub + * {
   --backdrop-filter:blur(0.3em);
   height:100%;
   -webkit-backdrop-filter:var(--backdrop-filter);
@@ -1654,11 +1654,11 @@ a {
   width:calc(100% - var(--left))
 }
 @media (hover:hover) {
-  .hdl-connection > user-tag + * {
+  .hdl-connection > user-tag-stub + * {
   --left:3em
 }
 }@media (hover:none) {
-  .hdl-connection > user-tag + * {
+  .hdl-connection > user-tag-stub + * {
   --left:2em
 }
 }.hdl-connection .hdl-abort-delete,.hdl-connection .hdl-confirm-delete {
@@ -2386,7 +2386,7 @@ side-menu > section {
   background-image:linear-gradient(var(--background-color),var(--transluent));
 }
 
-user-tag {
+user-tag-stub {
   box-sizing:border-box;
   position:relative;
   font-weight:bold;
@@ -2399,7 +2399,7 @@ user-tag {
   transition-property:color,background-color,opacity,visibility,height,width,transform,transform-origin,filter,left,top,right,-webkit-transform,-webkit-transform-origin,-webkit-filter
 }
 
-user-tag > .picture {
+user-tag-stub > .picture {
   --pict-size:1.93em;
   --border-width:0.14em;
   

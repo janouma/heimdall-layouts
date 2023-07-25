@@ -1,8 +1,10 @@
 import shell from 'shelljs'
 import { join } from 'path'
 import { existsSync } from 'fs'
-import argsUtils from '@heimdall/utils/args'
+import argsUtils from '@heimdall/utils/lib/args.js'
+import env from '../env.js'
 
+const { enableSourceMap, origin } = env
 const args = argsUtils.argsArrayToArgsObject()
 
 if (!args.name?.trim()) {
@@ -25,7 +27,10 @@ const componentDestinationPath = join(destination, component)
 
 shell.mkdir('-p', componentDestinationPath)
 
-const compileResult = shell.exec(`utils-compile-svelte source="${source}" destination="${destination}"`)
+const compileResult = shell.exec(
+  `utils-compile-svelte source="${source}" destination="${destination}" sourceMap=${enableSourceMap} \\
+    prefix=${origin}/${destination}`
+)
 
 if (compileResult.code > 0) {
   throw new Error('failed to compile component ' + args.name)

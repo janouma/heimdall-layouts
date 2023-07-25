@@ -3,6 +3,16 @@ export function mockApiResponse ({ url, payload, type = 'json' } = {}) {
   responses[url] = { type, payload }
 }
 
+const nativeFetch = fetch
+
+export function unmockApiResponse ({ url } = {}) {
+  if (url) {
+    delete responses[url]
+  } else {
+    window.fetch = nativeFetch
+  }
+}
+
 export function mockSetTimeout () {
   Object.assign(window, {
     setTimeout: spySetTimeout,
@@ -19,7 +29,6 @@ export function mockMathRandom (...numbers) {
 }
 
 const responses = {}
-const nativeFetch = fetch
 
 let timeouts = []
 let nextRandomNumber

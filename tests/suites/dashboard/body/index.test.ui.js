@@ -1,7 +1,7 @@
 import { test as testBase, expect } from '@playwright/test'
+import { readFileSync } from 'fs'
 import { getComponentHelpers } from '../../../helpers/components.js'
 import { createCountListener } from '../../../helpers/route.js'
-import { readFileSync } from 'fs'
 
 const test = testBase.extend({
   async lastItems ({ page }, use) {
@@ -20,35 +20,20 @@ const test = testBase.extend({
 const layout = 'dashboard'
 const component = 'body'
 
-const workspaces = [
-  'tech survey',
-  'escape',
-  'health survey',
-  'books followup',
-  'house survey',
-  'heroku like',
-  'job survey',
-  'home support',
-  'synonym search',
-  'proxy services',
-  'starfields',
-  'julia survey',
-  'graphic survey',
-  'game survey',
-  'devops dashboard',
-  'music discovery',
-  'droplets conf'
-]
-
 const {
   getComponentUrl,
   getScreenshotPath
 } = getComponentHelpers({ layout, component })
 
-test('body loading last items', async ({ page }) => {
-  await page.route('/api/find-items', () => {})
+test('body without pined', async ({ page, config }) => {
+  await page.route(
+    '/api/get-config/dashboard',
+    route => route.fulfill({ json: { pined: [], version: 1 } }),
+    { times: 1 }
+  )
+
   await page.goto(getComponentUrl())
-  return expect(page).toHaveScreenshot(getScreenshotPath('loading-last-items'))
+  return expect(page).toHaveScreenshot(getScreenshotPath('no-pined'))
 })
 
 test('body loading pined', async ({ page, lastItems, config }) => {
@@ -72,7 +57,6 @@ test('body loading pined', async ({ page, lastItems, config }) => {
 
 test('body loaded', async ({ page, lastItems, config }) => {
   const itemsLoadSequences = [
-    [5, 1, 7, 3, 4, 0],
     [2, 1, 3, 7],
     [0, 1, 2, 5, 3, 6, 7],
     Array.from({ length: lastItems.length }, (value, index) => index)
@@ -115,30 +99,109 @@ test('widget addition', async ({ page, lastItems, config }) => {
       window.addEventListener('set-modal', ({ detail }) => resolve(detail))
     }))
 
-    await page.getByTitle('Pin a workspace').click()
+    await page.getByTitle('Pin a search').click()
 
     await expect(modalArgs).resolves.toEqual([expect.objectContaining({
-      component: 'hdl-dashboard-workspace-finder',
-
-      params: {
-        title: 'pick a workspace',
-        workspaces
-      },
-
+      component: 'hdl-dashboard-search-builder',
+      type: 'web-component',
       paramsHaveAccessors: true,
-      type: 'web-component'
+      params: {
+        messages: {
+          titlePlaceholder: 'name your search',
+          drafts: 'drafts',
+          limit: 'limit',
+          iconalt: 'Icon for item',
+          preview: 'preview',
+          noPreview: 'your search didn’t yield any items',
+          searching: 'searching ...',
+          pin: 'pin',
+          searchBar: {
+            // eslint-disable-next-line no-template-curly-in-string
+            searchNItems: '${count} items found'
+          }
+        },
+        workspaces: [
+          'tech survey',
+          'pending',
+          'escape',
+          'health survey',
+          'books followup',
+          'comics followup',
+          'house survey',
+          'heroku like',
+          'job survey',
+          'home support',
+          'synonym search',
+          'proxy services',
+          'fuzzy search',
+          'starfields',
+          'julia survey',
+          'graphic survey',
+          'game survey',
+          'devops dashboard',
+          'music discovery',
+          'droplets conf'
+        ],
+        tags: [
+          {
+            name: 'javascript'
+          },
+          {
+            name: 'html'
+          },
+          {
+            name: 'css'
+          },
+          {
+            name: 'lib'
+          },
+          {
+            name: 'cheat sheet'
+          },
+          {
+            name: 'draft'
+          }
+        ],
+        tagaliases: {
+          js: 'javascript',
+          html5: 'html',
+          'html 5': 'html',
+          css3: 'css',
+          'css 3': 'css',
+          library: 'lib'
+        },
+        connections: [
+          {
+            $id: 'user-audie',
+            username: 'audie@mail.com'
+          },
+          {
+            $id: 'user-roger',
+            username: 'roger@mail.com'
+          }
+        ],
+        user: {
+          $id: 'user-janouma',
+          username: 'zanou@mail.com'
+        },
+        forbiddennames: [
+          'pending',
+          'comics followup',
+          'fuzzy search'
+        ]
+      }
     })])
   }
 
   {
-    let fullfillSentConfigData
-    const sentConfigData = new Promise(resolve => { fullfillSentConfigData = resolve })
+    let fulfillSentConfigData
+    const sentConfigData = new Promise(resolve => { fulfillSentConfigData = resolve })
 
     await page.route(
       '/api/set-config/dashboard',
 
       route => {
-        fullfillSentConfigData(route.request().postDataJSON())
+        fulfillSentConfigData(route.request().postDataJSON())
 
         route.fulfill({
           contentType: 'text/plain',
@@ -153,17 +216,63 @@ test('widget addition', async ({ page, lastItems, config }) => {
       window.addEventListener('set-modal', ({ detail }) => resolve(detail))
     }))
 
-    await page.evaluate(() => {
+    const dateNow = Date.now()
+    const performanceNow = performance.now()
+
+    await page.evaluate((timestamps) => {
+      Object.assign(globalThis, {
+        Date: class MockDate extends Date {
+          static now () { return timestamps.dateNow }
+        },
+
+        performance: Object.create(
+          performance,
+          { now: { value: () => timestamps.performanceNow } }
+        )
+      })
+
       window.mockModal.mount()
-      window.mockModal.element.dispatchEvent(new window.CustomEvent('pin', { detail: 'starfields' }))
-    })
+
+      window.mockModal.element.dispatchEvent(new window.CustomEvent('pin', {
+        detail: {
+          title: 'starfields wksp',
+          search: { workspace: 'starfields' }
+        }
+      }))
+    }, { dateNow, performanceNow })
 
     await expect(sentConfigData).resolves.toEqual({
       pined: [
-        'pending',
-        'comics followup',
-        'fuzzy search',
-        'starfields'
+        {
+          id: 'pending-7656877-709089808',
+          title: 'pending',
+          search: {
+            workspace: 'pending'
+          }
+        },
+        {
+          id: 'comics-followup-09P809998-4656',
+          title: 'comics followup',
+          search: {
+            workspace: 'comics followup'
+          }
+        },
+        {
+          id: 'fuzzy-search-12345678-0987654',
+          title: 'fuzzy search',
+          search: {
+            workspace: 'fuzzy search'
+          }
+        },
+        {
+          id: 'starfields-wksp-' +
+            (String(dateNow) + performanceNow).replaceAll('.', '-'),
+
+          title: 'starfields wksp',
+          search: {
+            workspace: 'starfields'
+          }
+        }
       ]
     })
 
@@ -191,14 +300,14 @@ test('widget removal', async ({ page, lastItems, config }) => {
 
   await widget.hover()
 
-  let fullfillSentConfigData
-  const sentConfigData = new Promise(resolve => { fullfillSentConfigData = resolve })
+  let fulfillSentConfigData
+  const sentConfigData = new Promise(resolve => { fulfillSentConfigData = resolve })
 
   await page.route(
     '/api/set-config/dashboard',
 
     route => {
-      fullfillSentConfigData(route.request().postDataJSON())
+      fulfillSentConfigData(route.request().postDataJSON())
 
       route.fulfill({
         contentType: 'text/plain',
@@ -209,10 +318,26 @@ test('widget removal', async ({ page, lastItems, config }) => {
     { times: 1 }
   )
 
-  await widget.getByTitle('Unpin workspace').click()
+  await widget.getByTitle('Unpin search').click()
+  await widget.getByTitle('Confirm search unpin').click()
 
   return expect(sentConfigData).resolves.toEqual({
-    pined: ['comics followup', 'fuzzy search']
+    pined: [
+      {
+        id: 'comics-followup-09P809998-4656',
+        title: 'comics followup',
+        search: {
+          workspace: 'comics followup'
+        }
+      },
+      {
+        id: 'fuzzy-search-12345678-0987654',
+        title: 'fuzzy search',
+        search: {
+          workspace: 'fuzzy search'
+        }
+      }
+    ]
   })
 })
 
@@ -228,7 +353,7 @@ test('notifications', async ({ page, lastItems, config }) => {
   )
 
   const initialLoad = Promise.all([
-    page.waitForResponse(createCountListener('/api/find-items', 4)),
+    page.waitForResponse(createCountListener('/api/find-items', 3)),
     page.waitForResponse('/api/get-config/dashboard')
   ])
 
@@ -240,7 +365,7 @@ test('notifications', async ({ page, lastItems, config }) => {
     route => route.fulfill({ json: lastItems.slice(0, 3) })
   )
 
-  const itemsUpdate = page.waitForResponse(createCountListener('/api/find-items', 4))
+  const itemsUpdate = page.waitForResponse(createCountListener('/api/find-items', 3))
 
   await page.evaluate(() => {
     const listeners = window.mockSse.subscriptions['/api/user-janouma/notification']
@@ -257,7 +382,26 @@ test('notifications', async ({ page, lastItems, config }) => {
     '/api/get-config/dashboard',
 
     route => route.fulfill({
-      json: { pined: ['comics followup', 'fuzzy search'] }
+      json: {
+        pined: [
+          {
+            id: '09P809998.4656',
+            title: 'comics followup',
+            search: {
+              workspace: 'comics followup'
+            }
+          },
+          {
+            id: '12345678.0987654',
+            title: 'fuzzy search',
+            search: {
+              workspace: 'fuzzy search'
+            }
+          }
+        ],
+
+        version: 1
+      }
     })
   )
 
@@ -295,7 +439,7 @@ test('reconnection', async ({ page, lastItems, config }) => {
   )
 
   const initialLoad = Promise.all([
-    page.waitForResponse(createCountListener('/api/find-items', 4)),
+    page.waitForResponse(createCountListener('/api/find-items', 3)),
     page.waitForResponse('/api/get-config/dashboard')
   ])
 
@@ -306,7 +450,18 @@ test('reconnection', async ({ page, lastItems, config }) => {
     '/api/get-config/dashboard',
 
     route => route.fulfill({
-      json: { pined: ['comics followup', 'fuzzy search'] }
+      json: {
+        pined: [
+          'comics followup',
+          'fuzzy search'
+        ].map(name => ({
+          id: name + '-id',
+          title: name,
+          search: { workspace: name }
+        })),
+
+        version: 1
+      }
     })
   )
 
@@ -345,7 +500,13 @@ test('widget count limit', async ({ page, lastItems }) => {
           'comics followup',
           'house survey',
           'heroku like'
-        ]
+        ].map(name => ({
+          id: name + '-id',
+          title: name,
+          search: { workspace: name }
+        })),
+
+        version: 1
       }
     })
   )
@@ -354,29 +515,25 @@ test('widget count limit', async ({ page, lastItems }) => {
   return expect(page).toHaveScreenshot(getScreenshotPath('max-widget-reached'))
 })
 
-test('workspaces limit', async ({ page, lastItems, config }) => {
-  await page.route(
-    '/api/find-items',
-    route => route.fulfill({ json: lastItems })
-  )
+test('dashboard config update', async ({ page, lastItems }) => {
+  await Promise.all([
+    page.route('/api/find-items', route => route.fulfill({ json: lastItems })),
 
-  await page.route(
-    '/api/get-config/dashboard',
-    route => route.fulfill({ json: config })
-  )
+    page.route(
+      '/api/get-config/dashboard',
+      route => route.fulfill({ json: { pined: ['books followup', 'house survey'] } })
+    ),
+
+    page.route('/api/set-config/dashboard', route => route.fulfill({ json: {} }))
+  ])
+
+  const initialLoad = Promise.all([
+    page.waitForResponse('/api/get-config/dashboard'),
+    page.waitForResponse(createCountListener('/api/find-items', 2))
+  ])
 
   await page.goto(getComponentUrl())
+  await initialLoad
 
-  const workspaces = config.pined.map(name => `{name:'${name}'}`)
-
-  await page.addScriptTag({
-    type: 'module',
-
-    content: `
-      import { state } from '../../../../helpers/layout_context.js'
-      state.workspaces.set([${workspaces.join(',')}])
-    `
-  })
-
-  return expect(page).toHaveScreenshot(getScreenshotPath('no-more-workspace'))
+  return expect(page).toHaveScreenshot(getScreenshotPath('updated-config'))
 })

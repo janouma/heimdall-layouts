@@ -7,26 +7,21 @@
   import 'joi'
   import { onMount } from 'svelte'
   import { createValidator } from '^/lib/validation.js'
-  import { createResolver } from '^/lib/path.js'
-  import loglevelPlaceholder from '^/lib/loglevel_placeholder.js'
 
   const componentDisplayName = '${__LAYOUT_FOLDER__}/body'
-  const staticVars = { log: loglevelPlaceholder.getLogger() }
   const { joi } = window
   const validate = createValidator(componentDisplayName)
-  const resolvePath = createResolver(import.meta.url)
 
   export let layoutContext
 
   let messages
 
   $: validate(layoutContext, 'layoutContext', joi.object().unknown())
-  $: staticVars.log = layoutContext?.log.getLogger('layout/' + componentDisplayName)
 
   onMount(async () => { messages = await getMessages() })
 
   async function getMessages () {
-    const response = await fetch(resolvePath('../assets/messages.json'))
+    const response = await fetch(import.meta.resolve('../assets/messages.json'))
     return response.json()
   }
 </script>

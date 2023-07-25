@@ -34,7 +34,10 @@
       const widget = document.createElement('hdl-dashboard-widget')
       
       widget.addEventListener('show-item-content', ({ detail: item }) => console.debug('show content for item:', item))
+      
       widget.addEventListener('remove', () => console.debug('remove'))
+      widget.addEventListener('edit', () => console.debug('edit'))
+      widget.addEventListener('expand', () => console.debug('expand'))
 
       applyParameters(widget, {
         title: 'recently added',
@@ -44,7 +47,11 @@
 
         messages: {
           iconalt: 'Icon of item',
-          deletetitle: 'Unpin workspace'
+          deletetitle: 'Unpin workspace',
+          editTitle: 'Update search',
+          confirmTitle: 'Confirm search unpin',
+          abortTitle: 'Abort search unpin',
+          expandTitle: 'Expand search'
         }
       })
 
