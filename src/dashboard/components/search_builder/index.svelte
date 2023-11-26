@@ -18,7 +18,7 @@
   import '@heimdall/shared-lib/components/search_bar/index.svelte'
   import '@heimdall/shared-lib/components/folder_browser/index.svelte'
   import { debounce } from '@heimdall/utils/lib/function.mjs'
-  import { createValidator } from '^/lib/validation.js'
+  import { createValidator } from 'lib/validation.js'
   import '../item/index.svelte'
 
   const DRAFT_TAG_NAME = 'draft'

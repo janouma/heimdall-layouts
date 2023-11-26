@@ -6,7 +6,7 @@
 <script>
   import 'joi'
   import { onMount } from 'svelte'
-  import { createValidator } from '^/lib/validation.js'
+  import { createValidator } from 'lib/validation.js'
 
   const componentDisplayName = '${__LAYOUT_FOLDER__}/body'
   const { joi } = window

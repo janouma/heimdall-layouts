@@ -11,8 +11,8 @@
 <script>
   import 'joi'
   import { onMount, onDestroy, tick } from 'svelte'
-  import { createValidator } from '^/lib/validation.js'
-  import { getConfig } from '^/lib/config.js'
+  import { createValidator } from 'lib/validation.js'
+  import { getConfig } from 'lib/config.js'
   import configUpdates from './lib/config_updates.js'
   import { gererateId } from './lib/utils.js'
   import '../widget/index.svelte'

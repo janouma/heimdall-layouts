@@ -5,7 +5,7 @@
 
 <script>
   import 'joi'
-  import { createValidator } from '^/lib/validation.js'
+  import { createValidator } from 'lib/validation.js'
 
   const componentDisplayName = '${__LAYOUT_FOLDER__}/${__COMPONENT_FOLDER__}'
   const { joi } = window

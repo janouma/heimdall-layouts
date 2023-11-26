@@ -7,8 +7,8 @@
   import 'joi'
   import { onDestroy } from 'svelte'
   import '../item/index.svelte'
-  import { createValidator } from '^/lib/validation.js'
-  import { onLongTouch } from '^/lib/events.js'
+  import { createValidator } from 'lib/validation.js'
+  import { onLongTouch } from 'lib/events.js'
 
   export let title
   export let items

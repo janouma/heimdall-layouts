@@ -33,7 +33,7 @@ module.exports = {
       destination: './packages/@heimdall/utils/$1'
     },
 
-    '/^\\^/lib/(.+)$/': {
+    '/^lib/(.+)$/': {
       alias: './lib/$1',
       copyModule: false
     },
