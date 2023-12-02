@@ -1,12 +1,29 @@
 {
   "body": {
-    "recentlyAdded": "recently added",
-    "addWidget": "Pin a workspace",
-    "pickWorkspace": "pick a workspace"
+    "addWidget": "Pin a search",
+    
+    "buildSearch": {
+      "titlePlaceholder": "name your search",
+      "drafts": "drafts",
+      "limit": "limit",
+      "iconalt": "Icon for item",
+      "preview": "preview",
+      "noPreview": "your search didn’t yield any items",
+      "searching": "searching ...",
+      "pin": "pin",
+      
+      "searchBar": {
+        "searchNItems": "${count} items found"
+      }
+    }
   },
 
   "widget": {
     "iconalt": "Icon for item",
-    "deletetitle": "Unpin workspace"
+    "deletetitle": "Unpin search",
+    "editTitle": "Update search",
+    "confirmTitle": "Confirm search unpin",
+    "abortTitle": "Abort search unpin",
+    "expandTitle": "Expand search"
   }
 }

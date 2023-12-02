@@ -1,5 +1,5 @@
 import { join } from 'path'
-import argsUtils from '@heimdall/utils/args'
+import argsUtils from '@heimdall/utils/lib/args.js'
 import renderString from 'es6-template-strings'
 import fsExtraCjs from 'fs-extra'
 

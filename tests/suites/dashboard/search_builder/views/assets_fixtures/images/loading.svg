@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2" viewBox="0 0 1250 1250">
+	<circle cx="625" cy="625" r="600" transform="rotate(-30, 625, 625)"
+		fill="url(#gradient)" stroke="#222038" stroke-width="50"/>
+
+	<defs>
+		<radialGradient id="gradient" cx="0" cy="0" r="1" gradientTransform="matrix(625 0 0 625 625 625)"
+			gradientUnits="userSpaceOnUse">
+			<stop offset="0" style="stop-color:#222038;stop-opacity:1"/>
+			<stop offset="0.85" style="stop-color:#222038;stop-opacity:1"/>
+			<stop offset="0.85" style="stop-color:rgb(187,183,76);stop-opacity:1"/>
+			<stop offset="1" style="stop-color:rgb(187,183,76);stop-opacity:1"/>
+		</radialGradient>
+	</defs>
+</svg>

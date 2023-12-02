@@ -1,7 +1,7 @@
 import shell from 'shelljs'
 import { join } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
-import argsUtils from '@heimdall/utils/args'
+import argsUtils from '@heimdall/utils/lib/args.js'
 
 const args = argsUtils.argsArrayToArgsObject()
 const layoutName = args.name?.trim()

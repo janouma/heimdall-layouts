@@ -30,12 +30,22 @@ export const mutations = {
   setSearchText () {},
   setSearchWorkspace () {},
   setSearchIncludeDraft () {},
-  setSearch () {}
+  setSearch () {},
+  switchToDefaultLayout () {}
 }
 
 export const computed = {
   connected: createStore(false),
-  tagAliases: createStore([]),
+
+  tagAliases: createStore({
+    js: 'javascript',
+    html5: 'html',
+    'html 5': 'html',
+    css3: 'css',
+    'css 3': 'css',
+    library: 'lib'
+  }),
+
   cleanSearch: createStore({}),
   isSearchingWithTransition: createStore(false)
 }
@@ -43,14 +53,23 @@ export const computed = {
 export const state = {
   session: createStore({
     user: {
-      $id: 'user-janouma'
+      $id: 'user-janouma',
+      username: 'zanou@mail.com'
     }
   }),
 
   webSocketOpen: createStore(false),
   bookmarkletToken: createStore(),
   modal: createStore(),
-  tags: createStore([]),
+
+  tags: createStore([
+    { name: 'javascript' },
+    { name: 'html' },
+    { name: 'css' },
+    { name: 'lib' },
+    { name: 'cheat sheet' },
+    { name: 'draft' }
+  ]),
 
   workspaces: createStore([
     { name: 'tech survey' },
@@ -91,7 +110,11 @@ export const state = {
   searching: createStore(false),
   shouldSearchTransitionSkipped: createStore(false),
   timeline: createStore(),
-  connections: createStore(),
+
+  connections: createStore([
+    { $id: 'user-audie', username: 'audie@mail.com' }, { $id: 'user-roger', username: 'roger@mail.com' }
+  ]),
+
   highContrast: createStore(false),
   isHighContrastPersisted: createStore(false),
   layout: createStore('astral'),
@@ -126,8 +149,6 @@ export const sseClient = {
   onDisconnect () {},
   offDisconnect () {}
 }
-
-export { default as log } from '../../lib/loglevel_placeholder.js'
 
 function createStore (initialValue) {
   let value = initialValue

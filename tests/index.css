@@ -52,6 +52,8 @@ svg text {
 body {
   --font-color: rgb(var(--eggshell));
   
+  padding: 0;
+  margin: 0;
   background-color: rgb(var(--eggshell));
   color: var(--font-color);
 }

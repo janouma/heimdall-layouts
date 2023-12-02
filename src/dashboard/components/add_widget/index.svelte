@@ -5,7 +5,7 @@
 
 <script>
   import 'joi'
-  import { createValidator } from '^/lib/validation.js'
+  import { createValidator } from 'lib/validation.js'
   
   export let title
   

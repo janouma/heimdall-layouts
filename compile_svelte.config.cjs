@@ -1,45 +1,46 @@
 'use strict'
 
-const { readdirSync } = require('fs')
-
-const libs = readdirSync('lib', { withFileTypes: true })
-  .filter(file => file.isFile() && file.name.endsWith('.js'))
-  .map(({ name }) => name)
-
 module.exports = {
   copyModules: true,
 
   modulesMapping: {
     svelte: {
       alias: 'svelte/internal/index.mjs',
-      destination: '../../packages/svelte/internal/index.mjs'
+      destination: './packages/svelte/internal/index.mjs'
     },
 
-    'svelte/internal': {
-      alias: 'svelte/internal/index.mjs',
-      destination: '../../packages/svelte/internal/index.mjs'
-    },
-
-    'svelte/easing': {
-      alias: 'svelte/easing/index.mjs',
-      destination: '../../packages/svelte/easing/index.mjs'
-    },
-
-    'svelte/transition': {
-      alias: 'svelte/transition/index.mjs',
-      destination: '../../packages/svelte/transition/index.mjs'
+    '/^svelte/(.*)$/': {
+      alias: 'svelte/$1/index.mjs',
+      destination: './packages/svelte/$1/index.mjs'
     },
 
     joi: {
       alias: 'joi/dist/joi-browser.min.js',
-      destination: '../../packages/joi-browser.min.js'
+      destination: './packages/joi-browser.min.js'
     },
 
-    ...libs.reduce((merged, lib) => Object.assign(merged, {
-      ['^/lib/' + lib]: {
-        alias: '../../lib/' + lib,
-        copyModule: false
-      }
-    }), {})
+    'fuse.js': {
+      alias: 'fuse.js/dist/fuse.basic.esm.min.js',
+      destination: './packages/fuse.js/dist/fuse.basic.esm.min.js'
+    },
+
+    'element-adapter': {
+      alias: 'element-adapter/dist/element-adapter.esm.js',
+      destination: './packages/element-adapter/dist/element-adapter.esm.js'
+    },
+
+    '/^@heimdall/utils/(.+)$/': {
+      destination: './packages/@heimdall/utils/$1'
+    },
+
+    '/^lib/(.+)$/': {
+      alias: './lib/$1',
+      copyModule: false
+    },
+
+    '/^@heimdall/shared-lib/components/(.+)\\.svelte$/': {
+      alias: './shared_components/$1.js',
+      copyModule: false
+    }
   }
 }

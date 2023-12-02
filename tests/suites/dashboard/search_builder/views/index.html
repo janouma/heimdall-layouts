@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/dashboard/search_builder/index.js"></script>
+    <script type="module">
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { mockApiResponse } from '../../../../helpers/api.js'
+      import { applyParameters } from '../../../../helpers/parameters.js'
+      import * as layoutContext from '../../../../helpers/layout_context.js'
+      
+      if (!isTestEnv()) {
+        const response = await fetch('../../../../fixtures/dashboard/last_items.json')
+        const items = await response.json()
+        mockApiResponse({ url: '/api/find-items', payload: [...items, ...items.slice(0, 5)] })
+      }
+
+      const component = document.createElement('hdl-dashboard-search-builder')
+
+      applyParameters(component, {
+        messages: {
+          "titlePlaceholder": "name your search",
+          "drafts": "drafts",
+          "limit": "limit",
+          "iconalt": "Icon for item",
+          "preview": "preview",
+          "noPreview": "your search didn’t yield any items",
+          "searching": "searching ...",
+          "pin": "pin",
+          
+          "searchBar": {
+            "searchNItems": "${count} items found"
+          }
+        },
+        
+        workspaces: [
+          'tech survey',
+          'pending',
+          'escape',
+          'health survey',
+          'books followup',
+          'comics followup',
+          'house survey',
+          'heroku like',
+          'job survey',
+          'home support',
+          'synonym search',
+          'proxy services',
+          'fuzzy search',
+          'starfields',
+          'julia survey',
+          'graphic survey',
+          'game survey',
+          'devops dashboard',
+          'music discovery',
+          'droplets conf'
+        ],
+        
+        tags: layoutContext.state.tags.value,
+        tagaliases: layoutContext.computed.tagAliases.value,
+        connections: layoutContext.state.connections.value,
+        user: layoutContext.state.session.value.user
+      })
+      
+      component.addEventListener('pin', ({ detail }) => console.debug('pin event detail:', detail))
+      
+      document.body.appendChild(component)
+    </script>
+
+    <style>
+      body {
+        background-color: rgb(var(--space));
+      }
+    </style>
+  </head>
+  <body></body>
+</html>

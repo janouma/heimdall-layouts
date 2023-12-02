@@ -3,43 +3,45 @@
   tag="hdl-dashboard"
 />
 
+<script context="module">
+  import logger from '@heimdall/utils/lib/logger.mjs'
+  const log = logger.getLogger('layout/dashboard/component/body')
+</script>
+
 <script>
   import 'joi'
-  import { onMount, onDestroy } from 'svelte'
-  import { createValidator } from '^/lib/validation.js'
-  import { createResolver } from '^/lib/path.js'
-  import loglevelPlaceholder from '^/lib/loglevel_placeholder.js'
+  import { onMount, onDestroy, tick } from 'svelte'
+  import { createValidator } from 'lib/validation.js'
+  import { getConfig } from 'lib/config.js'
+  import configUpdates from './lib/config_updates.js'
+  import { gererateId } from './lib/utils.js'
   import '../widget/index.svelte'
   import '../add_widget/index.svelte'
-  import '../workspace_finder/index.svelte'
+  import '../search_builder/index.svelte'
 
   const MAX_PINED = 4
   const componentDisplayName = 'dashboard/body'
-  const staticVars = { log: loglevelPlaceholder.getLogger() }
   const { joi } = window
   const validate = createValidator(componentDisplayName)
-  const resolvePath = createResolver(import.meta.url)
 
   export let layoutContext
 
-  let lastItems = getItemsPlaceholders()
   let pined
   let messages
   let pinedWidgets
+  let viewport
 
   $: session = layoutContext?.state.session
   $: workspaces = layoutContext?.state.workspaces
+  $: tags = layoutContext?.state.tags
+  $: connections = layoutContext?.state.connections
+  $: tagAliases = layoutContext?.computed.tagAliases
   $: userId = encodeURIComponent($session?.user.$id)
-
-  $: notPined = $workspaces
-    ?.filter(({ name }) => !pined?.includes(name))
-    .map(({ name }) => name)
-
-  $: limitReached = pined?.length >= MAX_PINED || notPined?.length === 0
+  $: limitReached = pined?.length >= MAX_PINED
+  $: workspacesNames = $workspaces?.map(({ name }) => name)
+  $: pinedTitles = pined?.map(({ title }) => title)
 
   $: validate(layoutContext, 'layoutContext', joi.object().unknown())
-
-  $: staticVars.log = layoutContext?.log.getLogger('layout/' + componentDisplayName)
 
   $: if (layoutContext) {
     layoutContext.sseClient.subscribe(
@@ -54,7 +56,6 @@
       logAnyError
     )
 
-    layoutContext.sseClient.onConnect(updateLastItems)
     layoutContext.sseClient.onConnect(updatePined)
   }
 
@@ -64,12 +65,9 @@
     messages = await getMessages()
 
     try {
-      await Promise.all([
-        updateLastItems(),
-        updatePined()
-      ])
+      await updatePined()
     } catch (error) {
-      staticVars.log.error(error.toString())
+      log.error(error.toString())
     }
   })
 
@@ -77,14 +75,13 @@
     if (layoutContext) {
       layoutContext.sseClient.unsubscribe(`/api/${userId}/notification`, updateItems)
       layoutContext.sseClient.unsubscribe(`/api/${userId}/dashboard/notification`, updatePined)
-      layoutContext.sseClient.offConnect(updateLastItems)
       layoutContext.sseClient.offConnect(updatePined)
     }
   })
 
   function logAnyError (error) {
     if (error) {
-      staticVars.log.error(error.toString())
+      log.error(error.toString())
     }
   }
 
@@ -102,49 +99,26 @@
   }
 
   async function getMessages () {
-    const response = await fetch(resolvePath('../assets/messages.json'))
+    const response = await fetch(import.meta.resolve('../assets/messages.json'))
     return response.json()
-  }
-
-  async function getLastItems () {
-    const response = await fetch('/api/find-items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-
-      body: JSON.stringify({
-        offset: 0,
-        max: 10,
-        includeDraft: true
-      })
-    })
-
-    if (response.ok) {
-      return response.json()
-    } else {
-      throw new Error('could not load last items')
-    }
   }
 
   function updateItems ({ type }) {
     if (type === 'itemsUpdate') {
-      return Promise.all([
-        updateLastItems(),
-        updatePinedWidgetsData()
-      ])
+      return updatePinedWidgetsData()
     }
   }
-  
-  async function updateLastItems () {
-    lastItems = await getLastItems()
-  }
-  
+
   async function updatePined () {
     pined = await getPined()
   }
 
   async function getPined () {
-    const response = await fetch('/api/get-config/dashboard')
-    const config = await response.json()
+    const config = await getConfig({
+      layout: 'dashboard',
+      updates: configUpdates
+    })
+
     return config?.pined
   }
 
@@ -153,11 +127,12 @@
 
     if (Math.abs(pinedCountDiff) > 0) {
       pinedWidgets ??= []
-      const propsByTitle = groupBy('title', pinedWidgets)
+      const propsById = groupBy('id', pinedWidgets)
 
-      pinedWidgets = pined.map((title, index) => ({
+      pinedWidgets = pined.map(({ id, title }, index) => ({
+        id,
         title,
-        items: propsByTitle[title]?.items ?? getItemsPlaceholders()
+        items: propsById[id]?.items ?? getItemsPlaceholders()
       }))
     }
 
@@ -177,43 +152,44 @@
   async function updatePinedWidgetsData () {
     for await (const fetchedProps of pined.map(getPinedWidgetData)) {
       if (fetchedProps) {
-        const { title } = fetchedProps
+        const { id } = fetchedProps
 
         pinedWidgets = pinedWidgets
-          .map(props => title !== props.title ? props : fetchedProps)
+          .map(props => id !== props.id ? props : fetchedProps)
+
+        tick()
+          .then(() => viewport
+            .querySelector('#' + id)?.scrollToTop())
       }
     }
   }
 
-  async function getPinedWidgetData (workspace) {
+  async function getPinedWidgetData ({ id, title, search }) {
     try {
       const response = await fetch('/api/find-items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-
-        body: JSON.stringify({
-          workspace,
-          offset: 0,
-          max: 300,
-          includeDraft: true
-        })
+        body: JSON.stringify(search)
       })
 
       if (response.ok) {
         return {
-          title: workspace,
+          id,
+          title,
           items: await response.json()
         }
       } else {
-        staticVars.log.error(`could not load items of "${workspace}"`)
+        log.error(`could not load items of "${title}"(${id}) pined search`)
+        log.debug('search:\n', search)
       }
     } catch (error) {
-      staticVars.log.error(`could not load items of "${workspace}":\n`, error)
+      log.error(`could not load items of "${title}"(${id}) pined search:\n`, error)
+      log.debug('search:\n', search)
     }
   }
 
   function showItemContent ({ detail: item }) {
-    staticVars.log.debug('showing item', item)
+    log.debug('showing item', item)
 
     layoutContext?.mutations.setModal({
       component: 'content-viewer',
@@ -228,41 +204,66 @@
     })
   }
 
-  function openWorkspaceFinder () {
-    staticVars.log.debug('opening workspace finder')
+  function expandPinedSearch (id) {
+    const pinedConfig = pined.find(config => config.id === id)
+
+    if (layoutContext) {
+      layoutContext.mutations.setSearch(pinedConfig.search)
+      layoutContext.mutations.switchToDefaultLayout()
+    } else {
+      log.warn('layoutContext is not set yet')
+    }
+  }
+
+  function openSearchBuilder (id) {
+    log.debug(id ? `editing search "${id}"` : 'opening search builder')
+
+    const pinedConfig = pined.find(config => config.id === id)
 
     layoutContext?.mutations.setModal({
-      component: 'hdl-dashboard-workspace-finder',
+      component: 'hdl-dashboard-search-builder',
       type: 'web-component',
       paramsHaveAccessors: true,
-      onMount (workspaceFinder) { workspaceFinder.addEventListener('pin', pinWorkspace) },
+      onMount (searchBuilder) { searchBuilder.addEventListener('pin', pinSearch) },
 
       params: {
-        title: messages?.body.pickWorkspace,
-        workspaces: notPined
+        messages: messages?.body.buildSearch,
+        workspaces: workspacesNames,
+        tags: $tags,
+        tagaliases: $tagAliases,
+        connections: $connections,
+        user: $session?.user,
+        forbiddennames: pinedTitles.filter(title => title !== pinedConfig?.title),
+        ...pinedConfig
       }
     })
   }
 
-  async function pinWorkspace ({ detail: workspace }) {
-    staticVars.log.debug('pining workspace', workspace)
+  async function pinSearch ({ detail: searchConfig }) {
+    log.debug('pining search', searchConfig)
+
+    const pinedSearch = {
+      ...searchConfig,
+      id: searchConfig.id || gererateId(searchConfig.title)
+    }
+
+    const replacedPinedSearchIndex = pined?.findIndex(({ id }) => pinedSearch.id === id) ?? -1
+
+    const updatedPined = replacedPinedSearchIndex >= 0
+      ? pined.with(replacedPinedSearchIndex, pinedSearch)
+      : [...(pined ?? []), pinedSearch]
 
     await fetch('/api/set-config/dashboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-
-      body: JSON.stringify({
-        pined: pined?.length > 0
-          ? Array.from(new Set([...pined, workspace]))
-          : [workspace]
-      })
+      body: JSON.stringify({ pined: updatedPined })
     })
 
     layoutContext.mutations.setModal()
   }
-  
-  async function unPinWorkspace (workspace) {
-    staticVars.log.debug('unpining workspace', workspace)
+
+  async function unPinSearch (id) {
+    log.debug('unpining search', id)
 
     if (pined) {
       return fetch('/api/set-config/dashboard', {
@@ -270,7 +271,7 @@
         headers: { 'Content-Type': 'application/json' },
 
         body: JSON.stringify({
-          pined: pined.filter(pinedWorkspace => pinedWorkspace !== workspace)
+          pined: pined.filter(pinedSearch => pinedSearch.id !== id)
         })
       })
     }
@@ -281,11 +282,11 @@
   :host {
     --main-header-height: 3.93em;
     --size-menu-width: 0;
-    
+
     @media (width > env(--small-screen)) {
       --size-menu-width: 4.78em;
     }
-    
+
     padding: var(--main-header-height) 0 0 var(--size-menu-width);
     box-sizing: border-box;
     display: block;
@@ -297,6 +298,7 @@
   .viewport {
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     flex-wrap: wrap;
     box-sizing: border-box;
     padding: 1.431em;
@@ -315,28 +317,24 @@
 
   hdl-dashboard-add-widget {
     min-height: 25.125em;
+    align-self: stretch;
   }
 </style>
 
-<div class="viewport">
-  <hdl-dashboard-widget
-    title={messages?.body.recentlyAdded ?? getTitlePlaceholder(35)}
-    items={lastItems}
-    messages={messages?.widget}
-    on:show-item-content={showItemContent}
-    readonly
-  ></hdl-dashboard-widget>
-
+<div bind:this={viewport} class="viewport">
   {#if pinedWidgets?.length > 0}
-    {#each pinedWidgets as { title, items }}
+    {#each pinedWidgets as { id, title, items } (id)}
       <hdl-dashboard-widget
         class="pined"
+        {id}
         {title}
         {items}
         messages={messages?.widget}
         maxvisible={10}
         on:show-item-content={showItemContent}
-        on:remove={unPinWorkspace(title)}
+        on:expand={expandPinedSearch(id)}
+        on:edit={openSearchBuilder(id)}
+        on:remove={unPinSearch(id)}
       ></hdl-dashboard-widget>
     {/each}
   {/if}
@@ -344,7 +342,7 @@
   {#if !limitReached}
     <hdl-dashboard-add-widget
       title={messages?.body.addWidget}
-      on:click={openWorkspaceFinder}
+      on:click={openSearchBuilder}
     ></hdl-dashboard-add-widget>
   {/if}
 </div>

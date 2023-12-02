@@ -1,12 +1,9 @@
 import * as layoutContext from './layout_context.js'
-import { createResolver } from '../../lib/path.js'
 
-const resolvePath = createResolver(import.meta.url)
-
-const head = fetch(resolvePath('../../templates/preview/head.html'))
+const head = fetch(import.meta.resolve('../../templates/preview/head.html'))
   .then(response => response.text())
 
-const body = fetch(resolvePath('../../templates/preview/body.html'))
+const body = fetch(import.meta.resolve('../../templates/preview/body.html'))
   .then(response => response.text())
 
 export default async function renderLayout (layout) {
@@ -16,7 +13,7 @@ export default async function renderLayout (layout) {
 
   const styleLink = document.createElement('link')
   styleLink.setAttribute('rel', 'stylesheet')
-  styleLink.setAttribute('href', resolvePath('../../templates/preview/index.css'))
+  styleLink.setAttribute('href', import.meta.resolve('../../templates/preview/index.css'))
   document.head.appendChild(styleLink)
 
   document.querySelector('.hdl-modal > .hdl-close').addEventListener(
