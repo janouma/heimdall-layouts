@@ -1,11 +1,16 @@
 import shell from 'shelljs'
 import { join, resolve as resolvePath, sep as slash } from 'path'
+import { existsSync } from 'fs'
 import createSimpleGit from 'simple-git'
 import env from '../env.js'
 
 const { enableSourceMap, origin } = env
 const componentsDir = join('node_modules', '@heimdall/shared-lib', 'components')
 const destinationDir = 'shared_components'
+
+if (existsSync(destinationDir)) {
+  shell.rm('-rf', destinationDir)
+}
 
 const components = shell.exec(`find ${componentsDir} -mindepth 1 -maxdepth 1 -type d`)
   .stdout.trim().split('\n')

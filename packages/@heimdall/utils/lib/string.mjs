@@ -2,18 +2,34 @@ export function escapeRegExp (str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-const nullish = [null, undefined]
-
 export function createOffsettedSplice () {
   let offset = 0
 
   return function splice (string, replacement, start, end) {
-    if (nullish.includes(string)) {
+    // eslint-disable-next-line eqeqeq
+    if (string == undefined) {
       throw new Error('string argument is required')
     }
 
-    if (nullish.includes(replacement)) {
+    // eslint-disable-next-line eqeqeq
+    if (replacement == undefined) {
       throw new Error('replacement argument is required')
+    }
+
+    if (!Number.isInteger(start)) {
+      throw new Error(`start argument must be an integer. Actual: ${start} (${typeof start})`)
+    }
+
+    if (start < 0) {
+      throw new Error('start argument must be a positive integer')
+    }
+
+    if (!Number.isInteger(end)) {
+      throw new Error(`end argument must be an integer. Actual: ${end} (${typeof end})`)
+    }
+
+    if (end < 0) {
+      throw new Error('end argument must be a positive integer')
     }
 
     if (end < start) {

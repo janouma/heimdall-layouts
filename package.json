@@ -35,7 +35,6 @@
     "build:component": "node scripts/build_component",
     "watch:component": "node scripts/watch_component",
     "create:component-test": "node scripts/create_component_test",
-    "preupdate-production-build": "npm run build:shared",
     "update-production-build": "node scripts/update_production_build",
     "dev": "NODE_ENV=development npm run"
   },
@@ -103,7 +102,7 @@
   },
   "dependencies": {
     "@heimdall/shared-lib": "^1.3.0",
-    "@heimdall/utils": "^2.1.1",
+    "@heimdall/utils": "^2.1.2",
     "fuse.js": "^6.0.0",
     "joi": "^17.7.0",
     "loglevel": "^1.8.1",
