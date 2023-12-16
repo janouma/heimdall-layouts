@@ -1,4 +1,4 @@
-import { test as testBase, expect } from '@playwright/test'
+import { test as testBase, expect } from '../../../helpers/playwright.js'
 import { readFileSync } from 'fs'
 import { getComponentHelpers } from '../../../helpers/components.js'
 import { createCountListener } from '../../../helpers/route.js'
@@ -385,14 +385,14 @@ test('notifications', async ({ page, lastItems, config }) => {
       json: {
         pined: [
           {
-            id: '09P809998.4656',
+            id: 'comics-followup-09P809998-4656',
             title: 'comics followup',
             search: {
               workspace: 'comics followup'
             }
           },
           {
-            id: '12345678.0987654',
+            id: 'fuzzy-search-12345678-0987654',
             title: 'fuzzy search',
             search: {
               workspace: 'fuzzy search'

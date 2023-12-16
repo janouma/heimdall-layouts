@@ -1,4 +1,4 @@
-import { test as testBase, expect } from '@playwright/test'
+import { test as testBase, expect } from '../../../helpers/playwright.js'
 import { readFileSync } from 'fs'
 import { getComponentHelpers } from '../../../helpers/components.js'
 
