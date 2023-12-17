@@ -37,7 +37,7 @@
   $: connections = layoutContext?.state.connections
   $: tagAliases = layoutContext?.computed.tagAliases
   $: userId = encodeURIComponent($session?.user.$id)
-  $: limitReached = pined?.length >= MAX_PINED
+  $: limitReached = !pined || pined.length >= MAX_PINED
   $: workspacesNames = $workspaces?.map(({ name }) => name)
   $: pinedTitles = pined?.map(({ title }) => title)
 

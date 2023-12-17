@@ -486,32 +486,38 @@ test('reconnection', async ({ page, lastItems, config }) => {
 })
 
 test('widget count limit', async ({ page, lastItems }) => {
+  let setRoute
+  const configApiCall = new Promise(resolve => { setRoute = resolve })
+
   await page.route(
     '/api/find-items',
     route => route.fulfill({ json: lastItems })
   )
 
-  await page.route(
-    '/api/get-config/dashboard',
-    route => route.fulfill({
-      json: {
-        pined: [
-          'books followup',
-          'comics followup',
-          'house survey',
-          'heroku like'
-        ].map(name => ({
-          id: name + '-id',
-          title: name,
-          search: { workspace: name }
-        })),
-
-        version: 1
-      }
-    })
-  )
-
+  await page.route('/api/get-config/dashboard', setRoute)
   await page.goto(getComponentUrl())
+
+  await expect(page.getByRole('button', { name: '✕' })).not.toBeVisible()
+
+  const getConfigRoute = await configApiCall
+
+  await getConfigRoute.fulfill({
+    json: {
+      pined: [
+        'books followup',
+        'comics followup',
+        'house survey',
+        'heroku like'
+      ].map(name => ({
+        id: name + '-id',
+        title: name,
+        search: { workspace: name }
+      })),
+
+      version: 1
+    }
+  })
+
   return expect(page).toHaveScreenshot(getScreenshotPath('max-widget-reached'))
 })
 
