@@ -512,7 +512,7 @@ test.describe('resized desktop', () => {
 
     const previewTitle = await page.getByRole('heading', { name: 'preview' })
     const preview = await previewTitle.locator(':scope + *')
-    const items = preview.getByRole('listitem')
+    const items = await preview.getByRole('listitem')
     await items.first().waitFor()
 
     await expect(preview)

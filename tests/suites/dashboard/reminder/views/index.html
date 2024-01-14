@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/dashboard/reminder/index.js"></script>
+    <script type="module">
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { mockRequestAnimationFrame, mockSetTimeout } from '../../../../helpers/api.js'
+      import { applyParameters } from '../../../../helpers/parameters.js'
+
+      if (isTestEnv()) {
+        mockRequestAnimationFrame()
+        mockSetTimeout(false)
+      }
+
+      const response = await fetch('../../../../fixtures/dashboard/last_items.json')
+      const items = await response.json()
+      const reminder = document.createElement('hdl-dashboard-reminder')
+      
+      reminder.addEventListener('show-item-content', ({ detail: item }) => console.debug('show content for item:', item))
+      
+      applyParameters(
+        reminder,
+        {
+          items,
+          
+          messages: {
+            navButtonTitle: 'Goto page ${page}',
+            iconalt: 'Icon for item',
+            snapshotalt: 'Snapshot for item'
+          }
+        }
+      )
+
+      document.body.appendChild(reminder)
+    </script>
+
+    <style>
+      body {
+        background-color: rgb(var(--space));
+        padding: 1.5em;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body></body>
+</html>

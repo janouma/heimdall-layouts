@@ -9,6 +9,7 @@
   import '../item/index.svelte'
   import { createValidator } from 'lib/validation.js'
   import { onLongTouch } from 'lib/events.js'
+  import { getActionTag, isLink, dispatchContentDisplayEvent } from 'lib/item.js'
 
   export let title
   export let items
@@ -63,23 +64,8 @@
     clearTimeout(staticVars.confirmTimeoutId)
   })
 
-  function getActionTag (item) {
-    return isLink(item) ? 'a' : 'button'
-  }
-
-  function isLink (item) {
-    return !item.type || item.type === 'url'
-  }
-
   function showItemContent (item) {
-    list?.parentNode.host.dispatchEvent(new window.CustomEvent(
-      'show-item-content',
-
-      {
-        detail: item,
-        bubbles: false
-      }
-    ))
+    dispatchContentDisplayEvent({ node: list, item })
   }
 
   function showRemoveButton () {
@@ -129,6 +115,7 @@
 </script>
 
 <style lang="postcss">
+  @import '@heimdall/shared-lib/style/color.css';
   @import '@heimdall/shared-lib/style/animation/animated.css';
   @import '@heimdall/shared-lib/style/fx/hover_fx.css';
   @import '@heimdall/shared-lib/style/visibility/not_visible.css';
