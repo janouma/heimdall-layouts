@@ -37,7 +37,7 @@ export default {
     actionTimeout: 0,
 
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'https://localhost:' + process.env.npm_package_config_testPort,
+    baseURL: 'https://localhost:' + process.env.testPort,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
