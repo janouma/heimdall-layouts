@@ -6,6 +6,8 @@ const chromeBinPathes = [
   '/usr/bin/google-chrome'
 ]
 
+const screenshotConfig = { maxDiffPixelRatio: 0.0125 }
+
 export default {
   testDir: 'tests',
 
@@ -17,7 +19,8 @@ export default {
      * Maximum time expect() should wait for the condition to be met.
      * For example in `await expect(locator).toHaveText();`
      */
-    timeout: 5000
+    timeout: 5000,
+    toHaveScreenshot: screenshotConfig
   },
 
   /* Run tests in files in parallel */
@@ -48,7 +51,7 @@ export default {
   projects: [
     {
       name: 'chromium',
-      expect: { toHaveScreenshot: { scale: 'device' } },
+      expect: { toHaveScreenshot: { ...screenshotConfig, scale: 'device' } },
 
       use: {
         ...(

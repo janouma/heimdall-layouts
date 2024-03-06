@@ -18,6 +18,7 @@
   import '../widget/index.svelte'
   import '../add_widget/index.svelte'
   import '../search_builder/index.svelte'
+  import '../reminder/index.svelte'
 
   const MAX_PINED = 4
   const componentDisplayName = 'dashboard/body'
@@ -30,6 +31,8 @@
   let messages
   let pinedWidgets
   let viewport
+  let pinedFetched = false
+  let reminded
 
   $: session = layoutContext?.state.session
   $: workspaces = layoutContext?.state.workspaces
@@ -37,7 +40,7 @@
   $: connections = layoutContext?.state.connections
   $: tagAliases = layoutContext?.computed.tagAliases
   $: userId = encodeURIComponent($session?.user.$id)
-  $: limitReached = !pined || pined.length >= MAX_PINED
+  $: limitReached = !pinedFetched || pined?.length >= MAX_PINED
   $: workspacesNames = $workspaces?.map(({ name }) => name)
   $: pinedTitles = pined?.map(({ title }) => title)
 
@@ -52,11 +55,11 @@
 
     layoutContext.sseClient.subscribe(
       `/api/${userId}/notification/dashboard`,
-      updatePined,
+      updateConfig,
       logAnyError
     )
 
-    layoutContext.sseClient.onConnect(updatePined)
+    layoutContext.sseClient.onConnect(updateConfig)
   }
 
   $: if (pined) { updatePinedWidgets() }
@@ -65,7 +68,7 @@
     messages = await getMessages()
 
     try {
-      await updatePined()
+      await updateConfig()
     } catch (error) {
       log.error(error.toString())
     }
@@ -74,8 +77,8 @@
   onDestroy(() => {
     if (layoutContext) {
       layoutContext.sseClient.unsubscribe(`/api/${userId}/notification`, updateItems)
-      layoutContext.sseClient.unsubscribe(`/api/${userId}/dashboard/notification`, updatePined)
-      layoutContext.sseClient.offConnect(updatePined)
+      layoutContext.sseClient.unsubscribe(`/api/${userId}/dashboard/notification`, updateConfig)
+      layoutContext.sseClient.offConnect(updateConfig)
     }
   })
 
@@ -85,17 +88,17 @@
     }
   }
 
-  function getItemsPlaceholders () {
-    return Array.from({ length: 10 }, (value, index) => ({
+  function getItemsPlaceholders (length, fill = ' ') {
+    return Array.from({ length }, (_, index) => ({
       $id: String(index),
-      title: getTitlePlaceholder(50),
+      title: getTitlePlaceholder(50, fill),
       url: 'javascript:void(0)'
     }))
   }
 
-  function getTitlePlaceholder (maxLength) {
+  function getTitlePlaceholder (maxLength, fill) {
     const length = Math.round(Math.random() * maxLength) + 15
-    return ' '.repeat(length)
+    return fill.repeat(length)
   }
 
   async function getMessages () {
@@ -109,17 +112,108 @@
     }
   }
 
-  async function updatePined () {
-    pined = await getPined()
+  async function updateConfig () {
+    const config = await fetchConfig()
+    pined = config?.pined
+
+    const remindedConfig = config?.reminded
+    const SEVEN_DAYS = 604800000
+
+    if (!remindedConfig || (Date.now() - remindedConfig.lastModified) >= SEVEN_DAYS) {
+      try {
+        reminded = await fetchReminded()
+      } catch (error) {
+        log.error('could not load reminded items:\n', error)
+      }
+    } else {
+      reminded = remindedConfig.items
+    }
   }
 
-  async function getPined () {
+  async function fetchConfig () {
+    pinedFetched = false
+
     const config = await getConfig({
       layout: 'dashboard',
       updates: configUpdates
     })
 
-    return config?.pined
+    pinedFetched = true
+    return config
+  }
+
+  async function fetchReminded () {
+    const DEFAULT_PAGE_SIZE = 20
+    const baseSearch = { includeDraft: true }
+    let itemsCount
+    let items
+
+    {
+      const response = await fetch('/api/count-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(baseSearch)
+      })
+
+      if (response.ok) {
+        itemsCount = await response.json()
+      } else {
+        throw new Error('could not count items')
+      }
+    }
+
+    {
+      const offsetLimit = Math.max(0, itemsCount - DEFAULT_PAGE_SIZE)
+
+      const response = await fetch('/api/find-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+
+        body: JSON.stringify({
+          ...baseSearch,
+          offset: Math.floor(Math.random() * offsetLimit)
+        })
+      })
+
+      if (response.ok) {
+        items = await response.json()
+      } else {
+        throw new Error('could not load reminded items')
+      }
+    }
+
+    const chosenItems = pickItems(items)
+
+    await fetch('/api/set-config/dashboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+
+      body: JSON.stringify({
+        reminded: {
+          lastModified: Date.now(),
+
+          items: chosenItems.map(
+            ({ $id, title, url, snapshot, icon, type }) => ({ $id, title, url, snapshot, icon, type })
+          )
+        }
+      })
+    })
+
+    return chosenItems
+  }
+
+  function pickItems (source) {
+    const pool = [...source]
+    const chosen = []
+    const chosenCount = Math.min(7, pool.length)
+
+    for (let index = 0; index < chosenCount; index++) {
+      const chosenIndex = Math.floor(Math.random() * pool.length)
+      chosen.push(pool[chosenIndex])
+      pool.splice(chosenIndex, 1)
+    }
+
+    return chosen
   }
 
   async function updatePinedWidgets () {
@@ -132,7 +226,7 @@
       pinedWidgets = pined.map(({ id, title }, index) => ({
         id,
         title,
-        items: propsById[id]?.items ?? getItemsPlaceholders()
+        items: propsById[id]?.items ?? getItemsPlaceholders(10)
       }))
     }
 
@@ -218,7 +312,7 @@
   function openSearchBuilder (id) {
     log.debug(id ? `editing search "${id}"` : 'opening search builder')
 
-    const pinedConfig = pined.find(config => config.id === id)
+    const pinedConfig = pined?.find(config => config.id === id)
 
     layoutContext?.mutations.setModal({
       component: 'hdl-dashboard-search-builder',
@@ -233,7 +327,7 @@
         tagaliases: $tagAliases,
         connections: $connections,
         user: $session?.user,
-        forbiddennames: pinedTitles.filter(title => title !== pinedConfig?.title),
+        forbiddennames: pinedTitles?.filter(title => title !== pinedConfig?.title),
         ...pinedConfig
       }
     })
@@ -296,53 +390,59 @@
   }
 
   .viewport {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    box-sizing: border-box;
-    padding: 1.431em;
-    column-gap: 2em;
-    row-gap: 3.5em;
+    --row-gap: 3.5em;
 
-    @media (width > env(--small-screen)) {
-      justify-content: flex-start;
+    padding: 1.431em 2.5em;
+
+    & > *:not(:last-child) {
+      margin-bottom: var(--row-gap);
     }
   }
 
-  hdl-dashboard-widget,
-  hdl-dashboard-add-widget {
-    width: 25em;
+  .widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(25em, 1fr));
+    column-gap: 2em;
+    row-gap: var(--row-gap);
   }
 
   hdl-dashboard-add-widget {
     min-height: 25.125em;
-    align-self: stretch;
   }
 </style>
 
 <div bind:this={viewport} class="viewport">
-  {#if pinedWidgets?.length > 0}
-    {#each pinedWidgets as { id, title, items } (id)}
-      <hdl-dashboard-widget
-        class="pined"
-        {id}
-        {title}
-        {items}
-        messages={messages?.widget}
-        maxvisible={10}
-        on:show-item-content={showItemContent}
-        on:expand={expandPinedSearch(id)}
-        on:edit={openSearchBuilder(id)}
-        on:remove={unPinSearch(id)}
-      ></hdl-dashboard-widget>
-    {/each}
+  {#if reminded}
+    <hdl-dashboard-reminder
+      items={reminded}
+      messages={messages?.reminder}
+      on:show-item-content={showItemContent}
+    ></hdl-dashboard-reminder>
   {/if}
 
-  {#if !limitReached}
-    <hdl-dashboard-add-widget
-      title={messages?.body.addWidget}
-      on:click={openSearchBuilder}
-    ></hdl-dashboard-add-widget>
-  {/if}
+  <section class="widgets">
+    {#if pinedWidgets?.length > 0}
+      {#each pinedWidgets as { id, title, items } (id)}
+        <hdl-dashboard-widget
+          class="pined"
+          {id}
+          {title}
+          {items}
+          messages={messages?.widget}
+          maxvisible={10}
+          on:show-item-content={showItemContent}
+          on:expand={expandPinedSearch(id)}
+          on:edit={openSearchBuilder(id)}
+          on:remove={unPinSearch(id)}
+        ></hdl-dashboard-widget>
+      {/each}
+    {/if}
+
+    {#if !limitReached}
+      <hdl-dashboard-add-widget
+        title={messages?.body.addWidget}
+        on:click={openSearchBuilder}
+      ></hdl-dashboard-add-widget>
+    {/if}
+  </section>
 </div>

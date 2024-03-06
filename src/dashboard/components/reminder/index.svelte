@@ -16,7 +16,7 @@
 
 <script>
   import 'joi'
-  import { onMount, onDestroy } from 'svelte'
+  import { onDestroy } from 'svelte'
   import { render as renderMessage } from '@heimdall/utils/lib/template_string.mjs'
   import { debounce } from '@heimdall/utils/lib/function.mjs'
   import { createValidator } from 'lib/validation.js'
@@ -49,6 +49,7 @@
   const componentDisplayName = 'dashboard/reminder'
   const { joi } = window
   const validate = createValidator(componentDisplayName)
+  const debounceSetCurrentPage = debounce(setCurrentPage, 50)
 
   $: validate(
     items,
@@ -76,14 +77,14 @@
   $: pagesCount = items?.length ? Math.ceil(items?.length / pageSize) : 0
   $: blur = round(hostWidth / (BASE_SIZE * (items?.length || 1)) / 37.5, 1)
 
-  onMount(() => {
+  $: if (carousel) {
     resizeObserver.observe(carousel.parentNode.host)
     carousel.addEventListener('scroll', debounceSetCurrentPage)
     Object.assign(statics, startAnimation())
     statics.debounceResetAnimationTimer = debounce(statics.resetAnimationTimer, 100)
     carousel.addEventListener('wheel', statics.debounceResetAnimationTimer)
     carousel.addEventListener('touchstart', statics.debounceResetAnimationTimer)
-  })
+  }
 
   onDestroy(() => {
     resizeObserver.disconnect()
@@ -101,8 +102,6 @@
     const { scrollLeft, scrollWidth } = carousel
     currentPage = Math.round((scrollLeft / scrollWidth) * pagesCount)
   }
-
-  const debounceSetCurrentPage = debounce(setCurrentPage, 50)
 
   function changePage (page) {
     goToPage(page)
@@ -168,20 +167,18 @@
     }
   }
 
-  ul, li {
+  li > *, nav {
     box-shadow: 0 0 1px 0 rgb(var(--sky)), inset 0 0 1px 0 rgb(var(--eggshell));
   }
 
   ul {
     list-style: none;
     display: flex;
-    background-color: rgb(var(--eggshell));
     overflow-y: hidden;
     overflow-x: auto;
     overscroll-behavior: none;
     padding: 0;
     margin: 0;
-    border-radius: 0.391em;
     height: 100%;
     scrollbar-width: none;
     scroll-snap-type: x mandatory;
@@ -195,8 +192,15 @@
     flex: none;
     width: calc(100% / var(--page-size));
     scroll-snap-align: start;
-    background: no-repeat center/cover url(assets/images/missing_snapshot.svg);
-    overflow: hidden;
+    padding-inline: 0.5em;
+    padding-bottom: 1.75em;
+
+    & > * {
+      background-color: rgb(var(--eggshell));
+      overflow: hidden;
+      background: no-repeat center/cover url(assets/images/missing_snapshot.svg);
+      border-radius: 0.391em;
+    }
 
     &:nth-child(2n) h2 {
       --fill-color: var(--eggshell);
@@ -236,19 +240,21 @@
 
   nav {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 33%;
+    bottom: 0;
+    left: 50%;
+    translate: -50% 0;
     display: flex;
     justify-content: center;
     align-items: start;
     pointer-events: none;
     column-gap: 1em;
-    background-image: linear-gradient(rgba(var(--deepspace), 50%), transparent);
-    padding-top: 0.75em;
+    padding: 0.25em;
+    background-color: rgba(var(--deepwater), 75%);
+
+    border-radius: 0.6875em;
 
     & button {
+      padding: 0;
       position: relative;
       pointer-events: auto;
       width: 0.875em;
@@ -274,7 +280,7 @@
         top: 0;
         left: 0;
         width: 100%;
-        aspect-ratio: 1;
+        height: 100%;
         border-radius: 50%;
         margin: calc(-1 * var(--expanse));
         padding: var(--expanse);
@@ -282,10 +288,10 @@
     }
 
     @media (hover: none) {
-      column-gap: 1.125em;
+      column-gap: 1.25em;
 
-      & button {
-        width: 1.5em;
+      & button::after {
+        --expanse: 75%;
       }
     }
   }

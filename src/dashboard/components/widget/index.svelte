@@ -127,6 +127,7 @@
     display: inline-block;
     border-radius: var(--border-radius);
     box-shadow: 0 0 1px 0 rgb(var(--eggshell));
+    background-color: var(--transluent);
   }
 
   ul {

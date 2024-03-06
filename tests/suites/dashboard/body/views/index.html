@@ -12,38 +12,43 @@
       import * as layoutContext from '../../../../helpers/layout_context.js'
 
       if (isTestEnv()) {
-        mockMathRandom(0.1, 0.2, 1, 0.9, 0.5, 0.6)
+        mockMathRandom(0.1, 0.2, 0.999999, 0.9, 0.5, 0.6)
       }
 
       if (!isTestEnv()) {
         {
           const response = await fetch('../../../../fixtures/dashboard/last_items.json')
           const lastItems = await response.json()
-          
+
           mockApiResponse({
             url: '/api/find-items',
-        
+
             payload (url, options) {
               const workspace = options?.body && JSON.parse(options.body).workspace
-        
+
               if (workspace) {
                 const length = Math.round(Math.random() * 17) + 3
-        
+
                 return Array.from({ length }, () => {
                   const itemIndex = Math.ceil(Math.random() * (lastItems.length - 1))
                   return lastItems[itemIndex]
                 })
               }
-        
+
               return lastItems
             }
+          })
+
+          mockApiResponse({
+            url: '/api/count-items',
+            payload: lastItems.length
           })
         }
 
         {
           const response = await fetch('../../../../fixtures/dashboard/config.json')
           const config = await response.json()
-        
+
           mockApiResponse({
             url: '/api/get-config/dashboard',
             payload: config

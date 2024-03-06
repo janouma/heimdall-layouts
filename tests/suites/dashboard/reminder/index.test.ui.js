@@ -54,7 +54,7 @@ test('default display', async ({ page }) => {
 
 test('page switch with page size of 2', async ({ page }) => {
   // TODO: fix test flackyness
-  test.skip(true, 'scroll simulation doesn’t works properly only')
+  test.skip(true, 'scroll simulation doesn’t works properly')
 
   await page.goto(getComponentUrl())
   await page.evaluate(() => window.mockEnlapsedTimeFrame(0))
@@ -139,7 +139,7 @@ test.describe('wide screen', () => {
 
   test('page switch with page size of 5', async ({ page }) => {
     // TODO: fix test flackyness
-    test.skip(true, 'scroll simulation doesn’t works properly only')
+    test.skip(true, 'scroll simulation doesn’t works properly')
 
     await page.goto(getComponentUrl())
     await page.evaluate(() => window.mockEnlapsedTimeFrame(0))

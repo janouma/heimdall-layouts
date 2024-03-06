@@ -1,7 +1,7 @@
 {
   "body": {
     "addWidget": "Pin a search",
-    
+
     "buildSearch": {
       "titlePlaceholder": "name your search",
       "drafts": "drafts",
@@ -11,7 +11,7 @@
       "noPreview": "your search didn’t yield any items",
       "searching": "searching ...",
       "pin": "pin",
-      
+
       "searchBar": {
         "searchNItems": "${count} items found"
       }
@@ -25,5 +25,11 @@
     "confirmTitle": "Confirm search unpin",
     "abortTitle": "Abort search unpin",
     "expandTitle": "Expand search"
+  },
+
+  "reminder": {
+    "navButtonTitle": "Goto page ${page}",
+    "iconalt": "Icon for item",
+    "snapshotalt": "Snapshot for item"
   }
 }

@@ -18,12 +18,16 @@ export function unmockApiResponse ({ url } = {}) {
 function spyFetch (url, ...args) {
   const mockResponse = responses[url]
 
-  return mockResponse
-    ? Promise.resolve({
+  if (mockResponse) {
+    console.log('fetch intercepted:', { url, args })
+
+    return Promise.resolve({
       ok: true,
       [mockResponse.type]: () => Promise.resolve(getPayload(mockResponse, url, ...args))
     })
-    : nativeFetch(url, ...args)
+  }
+
+  return nativeFetch(url, ...args)
 }
 
 function getPayload ({ payload }, ...args) {
@@ -38,6 +42,8 @@ export function mockMathRandom (...numbers) {
   mockRandomNumbers = numbers
   Math.random = spyRandom
 }
+
+window.mockMathRandom = mockMathRandom
 
 function spyRandom () {
   const number = mockRandomNumbers[nextRandomNumber]
