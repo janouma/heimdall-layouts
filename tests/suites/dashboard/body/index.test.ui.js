@@ -40,6 +40,11 @@ test('body loading pined', async ({ page, lastItems, config }) => {
   await page.route('/api/find-items', () => {})
 
   await page.route(
+    '/api/count-items',
+    route => route.fulfill({ json: lastItems.length })
+  )
+
+  await page.route(
     '/api/find-items',
     route => route.fulfill({ json: lastItems }),
     { times: 1 }
@@ -47,8 +52,7 @@ test('body loading pined', async ({ page, lastItems, config }) => {
 
   await page.route(
     '/api/get-config/dashboard',
-    route => route.fulfill({ json: config }),
-    { times: 1 }
+    route => route.fulfill({ json: config })
   )
 
   await page.goto(getComponentUrl())
@@ -62,6 +66,8 @@ test('body loaded', async ({ page, lastItems, config }) => {
     lastItems.map((_, index) => index)
   ]
 
+  await page.route('/api/find-items', () => {})
+
   for (const itemLoadSequence of itemsLoadSequences) {
     await page.route(
       '/api/find-items',
@@ -72,8 +78,12 @@ test('body loaded', async ({ page, lastItems, config }) => {
 
   await page.route(
     '/api/get-config/dashboard',
-    route => route.fulfill({ json: config }),
-    { times: 1 }
+    route => route.fulfill({ json: config })
+  )
+
+  await page.route(
+    '/api/count-items',
+    route => route.fulfill({ json: lastItems.length })
   )
 
   await page.goto(getComponentUrl())
@@ -106,14 +116,23 @@ test('body loaded', async ({ page, lastItems, config }) => {
 
 test('widget addition without existing config', async ({ page, lastItems }) => {
   await page.route(
+    '/api/count-items',
+    route => route.fulfill({ json: lastItems.length })
+  )
+
+  await page.route(
     '/api/find-items',
     route => route.fulfill({ json: lastItems })
   )
 
   await page.route(
     '/api/get-config/dashboard',
-    route => route.fulfill({ json: null }),
-    { times: 1 }
+    route => route.fulfill({ json: null })
+  )
+
+  await page.route(
+    '/api/set-config/dashboard',
+    route => route.fulfill()
   )
 
   await page.goto(getComponentUrl())
@@ -130,14 +149,23 @@ test('widget addition without existing config', async ({ page, lastItems }) => {
 
 test('widget addition with existing config', async ({ page, lastItems, config }) => {
   await page.route(
+    '/api/count-items',
+    route => route.fulfill({ json: lastItems.length })
+  )
+
+  await page.route(
     '/api/find-items',
     route => route.fulfill({ json: lastItems })
   )
 
   await page.route(
     '/api/get-config/dashboard',
-    route => route.fulfill({ json: config }),
-    { times: 1 }
+    route => route.fulfill({ json: config })
+  )
+
+  await page.route(
+    '/api/set-config/dashboard',
+    route => route.fulfill()
   )
 
   await page.goto(getComponentUrl())
@@ -330,14 +358,23 @@ test('widget addition with existing config', async ({ page, lastItems, config })
 
 test('widget removal', async ({ page, lastItems, config }) => {
   await page.route(
+    '/api/count-items',
+    route => route.fulfill({ json: lastItems.length })
+  )
+
+  await page.route(
     '/api/find-items',
     route => route.fulfill({ json: lastItems })
   )
 
   await page.route(
     '/api/get-config/dashboard',
-    route => route.fulfill({ json: config }),
-    { times: 1 }
+    route => route.fulfill({ json: config })
+  )
+
+  await page.route(
+    '/api/set-config/dashboard',
+    route => route.fulfill()
   )
 
   await page.goto(getComponentUrl())
@@ -533,9 +570,14 @@ test('reconnection', async ({ page, lastItems, config }) => {
   return expect(page).toHaveScreenshot(getScreenshotPath('reconnection'))
 })
 
-test('widget count limit', async ({ page, lastItems }) => {
+test('widget count limit', async ({ page, lastItems, config }) => {
   let setRoute
   const configApiCall = new Promise(resolve => { setRoute = resolve })
+
+  await page.route(
+    '/api/count-items',
+    route => route.fulfill({ json: 0 })
+  )
 
   await page.route(
     '/api/find-items',
@@ -543,6 +585,12 @@ test('widget count limit', async ({ page, lastItems }) => {
   )
 
   await page.route('/api/get-config/dashboard', setRoute)
+
+  await page.route(
+    '/api/set-config/dashboard',
+    route => route.fulfill()
+  )
+
   await page.goto(getComponentUrl())
 
   await expect(page.getByRole('button', { name: '✕' })).not.toBeVisible()
@@ -812,7 +860,7 @@ test('body loading existing reminded', async ({ page, lastItems, config }) => {
     window.addEventListener('set-modal', ({ detail }) => resolve(detail))
   }))
 
-  await page.locator('hdl-dashboard-reminder')
+  await page.locator('hdl-dashboard-discovery')
     .filter({ hasText: 'detect firefox in CSS' })
     .getByRole('button', { name: 'detect firefox in CSS' })
     .click()

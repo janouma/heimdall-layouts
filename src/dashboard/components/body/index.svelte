@@ -18,7 +18,7 @@
   import '../widget/index.svelte'
   import '../add_widget/index.svelte'
   import '../search_builder/index.svelte'
-  import '../reminder/index.svelte'
+  import '../discovery/index.svelte'
 
   const MAX_PINED = 4
   const componentDisplayName = 'dashboard/body'
@@ -31,8 +31,8 @@
   let messages
   let pinedWidgets
   let viewport
-  let pinedFetched = false
-  let reminded
+  let remindedConfig
+  let configFetched = false
 
   $: session = layoutContext?.state.session
   $: workspaces = layoutContext?.state.workspaces
@@ -40,7 +40,7 @@
   $: connections = layoutContext?.state.connections
   $: tagAliases = layoutContext?.computed.tagAliases
   $: userId = encodeURIComponent($session?.user.$id)
-  $: limitReached = !pinedFetched || pined?.length >= MAX_PINED
+  $: limitReached = !configFetched || pined?.length >= MAX_PINED
   $: workspacesNames = $workspaces?.map(({ name }) => name)
   $: pinedTitles = pined?.map(({ title }) => title)
 
@@ -113,107 +113,18 @@
   }
 
   async function updateConfig () {
-    const config = await fetchConfig()
-    pined = config?.pined
-
-    const remindedConfig = config?.reminded
-    const SEVEN_DAYS = 604800000
-
-    if (!remindedConfig || (Date.now() - remindedConfig.lastModified) >= SEVEN_DAYS) {
-      try {
-        reminded = await fetchReminded()
-      } catch (error) {
-        log.error('could not load reminded items:\n', error)
-      }
-    } else {
-      reminded = remindedConfig.items
-    }
-  }
-
-  async function fetchConfig () {
-    pinedFetched = false
+    configFetched = false
 
     const config = await getConfig({
       layout: 'dashboard',
       updates: configUpdates
     })
 
-    pinedFetched = true
-    return config
-  }
-
-  async function fetchReminded () {
-    const DEFAULT_PAGE_SIZE = 20
-    const baseSearch = { includeDraft: true }
-    let itemsCount
-    let items
-
-    {
-      const response = await fetch('/api/count-items', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(baseSearch)
-      })
-
-      if (response.ok) {
-        itemsCount = await response.json()
-      } else {
-        throw new Error('could not count items')
-      }
+    if (config) {
+      ({ pined, reminded: remindedConfig } = config)
     }
 
-    {
-      const offsetLimit = Math.max(0, itemsCount - DEFAULT_PAGE_SIZE)
-
-      const response = await fetch('/api/find-items', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-
-        body: JSON.stringify({
-          ...baseSearch,
-          offset: Math.floor(Math.random() * offsetLimit)
-        })
-      })
-
-      if (response.ok) {
-        items = await response.json()
-      } else {
-        throw new Error('could not load reminded items')
-      }
-    }
-
-    const chosenItems = pickItems(items)
-
-    await fetch('/api/set-config/dashboard', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-
-      body: JSON.stringify({
-        reminded: {
-          lastModified: Date.now(),
-
-          items: chosenItems.map(
-            ({ $id, title, url, snapshot, icon, type }) => ({ $id, title, url, snapshot, icon, type })
-          )
-        }
-      })
-    })
-
-    return chosenItems
-  }
-
-  function pickItems (source) {
-    const pool = [...source]
-    const chosen = []
-    const chosenCount = Math.min(7, pool.length)
-
-    for (let index = 0; index < chosenCount; index++) {
-      const chosenIndex = Math.floor(Math.random() * pool.length)
-      chosen.push(pool[chosenIndex])
-      pool.splice(chosenIndex, 1)
-    }
-
-    return chosen
+    configFetched = true
   }
 
   async function updatePinedWidgets () {
@@ -412,13 +323,12 @@
 </style>
 
 <div bind:this={viewport} class="viewport">
-  {#if reminded}
-    <hdl-dashboard-reminder
-      items={reminded}
-      messages={messages?.reminder}
-      on:show-item-content={showItemContent}
-    ></hdl-dashboard-reminder>
-  {/if}
+  <hdl-dashboard-discovery
+    initload={configFetched}
+    config={remindedConfig}
+    messages={messages?.reminder}
+    on:show-item-content={showItemContent}
+  ></hdl-dashboard-discovery>
 
   <section class="widgets">
     {#if pinedWidgets?.length > 0}
