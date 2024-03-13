@@ -228,7 +228,7 @@
     position: relative;
     background-image: linear-gradient(transparent, rgba(var(--fill-color), 90%) var(--gradient-size));
     height: calc(2.62em + var(--gradient-size));
-    line-height: 1.125;
+    line-height: 1.15;
     padding: 0.25em 0.375em;
     padding-top: calc(0.25em + var(--gradient-size));
     margin: 0;
