@@ -10,17 +10,15 @@
 
 <script>
   import 'joi'
-  import { onMount, onDestroy, tick } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import { createValidator } from 'lib/validation.js'
   import { getConfig } from 'lib/config.js'
-  import configUpdates from './lib/config_updates.js'
-  import { gererateId } from './lib/utils.js'
-  import '../widget/index.svelte'
-  import '../add_widget/index.svelte'
-  import '../search_builder/index.svelte'
+  import configUpdates from '../../lib/config_updates.js'
+  import { gererateId } from '../../lib/utils.js'
   import '../discovery/index.svelte'
+  import '../pin_board/index.svelte'
+  import '../search_builder/index.svelte'
 
-  const MAX_PINED = 4
   const componentDisplayName = 'dashboard/body'
   const { joi } = window
   const validate = createValidator(componentDisplayName)
@@ -29,19 +27,17 @@
 
   let pined
   let messages
-  let pinedWidgets
-  let viewport
   let remindedConfig
+  let pinBoard
   let configFetched = false
 
   $: session = layoutContext?.state.session
   $: workspaces = layoutContext?.state.workspaces
+  $: workspacesNames = $workspaces?.map(({ name }) => name)
   $: tags = layoutContext?.state.tags
   $: connections = layoutContext?.state.connections
   $: tagAliases = layoutContext?.computed.tagAliases
   $: userId = encodeURIComponent($session?.user.$id)
-  $: limitReached = !configFetched || pined?.length >= MAX_PINED
-  $: workspacesNames = $workspaces?.map(({ name }) => name)
   $: pinedTitles = pined?.map(({ title }) => title)
 
   $: validate(layoutContext, 'layoutContext', joi.object().unknown())
@@ -61,8 +57,6 @@
 
     layoutContext.sseClient.onConnect(updateConfig)
   }
-
-  $: if (pined) { updatePinedWidgets() }
 
   onMount(async () => {
     messages = await getMessages()
@@ -88,19 +82,6 @@
     }
   }
 
-  function getItemsPlaceholders (length, fill = ' ') {
-    return Array.from({ length }, (_, index) => ({
-      $id: String(index),
-      title: getTitlePlaceholder(50, fill),
-      url: 'javascript:void(0)'
-    }))
-  }
-
-  function getTitlePlaceholder (maxLength, fill) {
-    const length = Math.round(Math.random() * maxLength) + 15
-    return fill.repeat(length)
-  }
-
   async function getMessages () {
     const response = await fetch(import.meta.resolve('../assets/messages.json'))
     return response.json()
@@ -108,7 +89,7 @@
 
   function updateItems ({ type }) {
     if (type === 'itemsUpdate') {
-      return updatePinedWidgetsData()
+      return pinBoard?.refresh()
     }
   }
 
@@ -127,72 +108,6 @@
     configFetched = true
   }
 
-  async function updatePinedWidgets () {
-    const pinedCountDiff = pined.length - (pinedWidgets?.length ?? 0)
-
-    if (Math.abs(pinedCountDiff) > 0) {
-      pinedWidgets ??= []
-      const propsById = groupBy('id', pinedWidgets)
-
-      pinedWidgets = pined.map(({ id, title }, index) => ({
-        id,
-        title,
-        items: propsById[id]?.items ?? getItemsPlaceholders(10)
-      }))
-    }
-
-    return updatePinedWidgetsData()
-  }
-
-  function groupBy (prop, array) {
-    return array.reduce(
-      (groups, item) => Object.assign(
-        groups,
-        { [item[prop]]: item }
-      ),
-      {}
-    )
-  }
-
-  async function updatePinedWidgetsData () {
-    for await (const fetchedProps of pined.map(getPinedWidgetData)) {
-      if (fetchedProps) {
-        const { id } = fetchedProps
-
-        pinedWidgets = pinedWidgets
-          .map(props => id !== props.id ? props : fetchedProps)
-
-        tick()
-          .then(() => viewport
-            .querySelector('#' + id)?.scrollToTop())
-      }
-    }
-  }
-
-  async function getPinedWidgetData ({ id, title, search }) {
-    try {
-      const response = await fetch('/api/find-items', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(search)
-      })
-
-      if (response.ok) {
-        return {
-          id,
-          title,
-          items: await response.json()
-        }
-      } else {
-        log.error(`could not load items of "${title}"(${id}) pined search`)
-        log.debug('search:\n', search)
-      }
-    } catch (error) {
-      log.error(`could not load items of "${title}"(${id}) pined search:\n`, error)
-      log.debug('search:\n', search)
-    }
-  }
-
   function showItemContent ({ detail: item }) {
     log.debug('showing item', item)
 
@@ -209,21 +124,17 @@
     })
   }
 
-  function expandPinedSearch (id) {
-    const pinedConfig = pined.find(config => config.id === id)
-
+  function expandPinedSearch ({ detail: search }) {
     if (layoutContext) {
-      layoutContext.mutations.setSearch(pinedConfig.search)
+      layoutContext.mutations.setSearch(search)
       layoutContext.mutations.switchToDefaultLayout()
     } else {
       log.warn('layoutContext is not set yet')
     }
   }
 
-  function openSearchBuilder (id) {
-    log.debug(id ? `editing search "${id}"` : 'opening search builder')
-
-    const pinedConfig = pined?.find(config => config.id === id)
+  function openSearchBuilder ({ detail: pinedConfig }) {
+    log.debug(pinedConfig?.id ? `editing search "${pinedConfig.id}"` : 'adding search')
 
     layoutContext?.mutations.setModal({
       component: 'hdl-dashboard-search-builder',
@@ -266,21 +177,6 @@
 
     layoutContext.mutations.setModal()
   }
-
-  async function unPinSearch (id) {
-    log.debug('unpining search', id)
-
-    if (pined) {
-      return fetch('/api/set-config/dashboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-
-        body: JSON.stringify({
-          pined: pined.filter(pinedSearch => pinedSearch.id !== id)
-        })
-      })
-    }
-  }
 </script>
 
 <style lang="postcss">
@@ -302,6 +198,7 @@
 
   .viewport {
     --row-gap: 3.5em;
+    --pin-board-row-gap: var(--row-gap);
 
     padding: 1.431em 2.5em;
 
@@ -309,20 +206,9 @@
       margin-bottom: var(--row-gap);
     }
   }
-
-  .widgets {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(25em, 1fr));
-    column-gap: 2em;
-    row-gap: var(--row-gap);
-  }
-
-  hdl-dashboard-add-widget {
-    min-height: 25.125em;
-  }
 </style>
 
-<div bind:this={viewport} class="viewport">
+<div class="viewport">
   <hdl-dashboard-discovery
     initload={configFetched}
     config={remindedConfig}
@@ -330,29 +216,13 @@
     on:show-item-content={showItemContent}
   ></hdl-dashboard-discovery>
 
-  <section class="widgets">
-    {#if pinedWidgets?.length > 0}
-      {#each pinedWidgets as { id, title, items } (id)}
-        <hdl-dashboard-widget
-          class="pined"
-          {id}
-          {title}
-          {items}
-          messages={messages?.widget}
-          maxvisible={10}
-          on:show-item-content={showItemContent}
-          on:expand={expandPinedSearch(id)}
-          on:edit={openSearchBuilder(id)}
-          on:remove={unPinSearch(id)}
-        ></hdl-dashboard-widget>
-      {/each}
-    {/if}
-
-    {#if !limitReached}
-      <hdl-dashboard-add-widget
-        title={messages?.body.addWidget}
-        on:click={openSearchBuilder}
-      ></hdl-dashboard-add-widget>
-    {/if}
-  </section>
+  <hdl-dashboard-pin-board
+    bind:this={pinBoard}
+    {pined}
+    configfetched={configFetched}
+    on:show-item-content={showItemContent}
+    on:expand={expandPinedSearch}
+    on:edit={openSearchBuilder}
+    messages={messages?.pinBoard}
+  ></hdl-dashboard-pin-board>
 </div>

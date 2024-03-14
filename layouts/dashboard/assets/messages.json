@@ -1,7 +1,5 @@
 {
   "body": {
-    "addWidget": "Pin a search",
-
     "buildSearch": {
       "titlePlaceholder": "name your search",
       "drafts": "drafts",
@@ -18,13 +16,17 @@
     }
   },
 
-  "widget": {
-    "iconalt": "Icon for item",
-    "deletetitle": "Unpin search",
-    "editTitle": "Update search",
-    "confirmTitle": "Confirm search unpin",
-    "abortTitle": "Abort search unpin",
-    "expandTitle": "Expand search"
+  "pinBoard": {
+    "addWidget": "Pin a search",
+
+    "widget": {
+      "iconalt": "Icon for item",
+      "deletetitle": "Unpin search",
+      "editTitle": "Update search",
+      "confirmTitle": "Confirm search unpin",
+      "abortTitle": "Abort search unpin",
+      "expandTitle": "Expand search"
+    }
   },
 
   "reminder": {

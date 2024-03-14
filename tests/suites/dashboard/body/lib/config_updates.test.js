@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import updates from '../../../../../src/dashboard/components/body/lib/config_updates.js'
+import updates from '../../../../../src/dashboard/lib/config_updates.js'
 
 const dateNow = Date.now()
 const performanceNow = performance.now()
