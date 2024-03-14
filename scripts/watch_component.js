@@ -21,7 +21,12 @@ if (!existsSync(source)) {
   throw new Error(`"${source}" component doesn't exist`)
 }
 
-const watchCommand = `nodemon -e js,svelte,png,svg,jpg,json --delay 0.5 --watch ${layoutSource} --exec "npm run build:component -- name=${layout}/${component}"`
+const remainingArgs = Object.entries(args)
+  .filter(([name]) => name !== 'name')
+  .reduce((commanLineArgs, [name, value]) => `${commanLineArgs} ${name}=${value}`, '')
+  .trim()
+
+const watchCommand = `nodemon -e js,svelte,png,svg,jpg,json,css --delay 0.5 --watch ${layoutSource} --exec "npm run build:component -- name=${layout}/${component} ${remainingArgs}"`
 
 console.debug('watch command:', watchCommand)
 

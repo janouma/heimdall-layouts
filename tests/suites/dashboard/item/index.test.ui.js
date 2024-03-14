@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../../../helpers/playwright.js'
 import { getComponentHelpers } from '../../../helpers/components.js'
 
 const layout = 'dashboard'

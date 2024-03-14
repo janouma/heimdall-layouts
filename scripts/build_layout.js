@@ -47,8 +47,13 @@ console.debug('components:', components)
 
 const indexStatements = []
 
+const remainingArgs = Object.entries(args)
+  .filter(([name]) => name !== 'name')
+  .reduce((commanLineArgs, [name, value]) => `${commanLineArgs} ${name}=${value}`, '')
+  .trim()
+
 for (const component of components) {
-  const compileResult = shell.exec(`npm run build:component -- name=${layoutName}/${component}`)
+  const compileResult = shell.exec(`npm run build:component -- name=${layoutName}/${component} ${remainingArgs}`)
 
   if (compileResult.code > 0) {
     throw new Error('failed to compile component ' + component)

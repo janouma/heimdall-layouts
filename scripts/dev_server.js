@@ -8,7 +8,7 @@ browserSync({
     cert: 'assets/ssl/cert.pem'
   },
 
-  port: process.env.npm_package_config_devPort,
+  port: process.env.devPort,
   open: false,
   ui: false,
   cors: true,

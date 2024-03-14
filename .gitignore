@@ -2,6 +2,9 @@ node_modules
 *.log
 *.map
 .cache
+.npmrc
+.env
+.env.*
 /test-results/
 /test-snapshots/local/
 /playwright-report/
