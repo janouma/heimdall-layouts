@@ -789,51 +789,14 @@ test('body loading existing reminded', async ({ page, lastItems, config }) => {
           lastModified: Date.now(),
 
           items: [
-            {
-              $id: 'writesonic-id',
-              title: 'writesonic – best ai writer, copywritting and graphics creator',
-              url: 'https://writesonic.com',
-              snapshot: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/writesonic_screenshot.png',
-              icon: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/redmi_icon.ico'
-            },
-            {
-              $id: 'neutralino-id',
-              title: 'build lightweight cross-platform desktop application',
-              url: 'https://neutralino.js.org',
-              snapshot: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/neutralino_screenshot.png',
-              icon: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/neutralino_icon.png'
-            },
-            {
-              $id: 'detect-firefox-css-id',
-              title: 'detect firefox in CSS',
-              type: 'css'
-            },
-            {
-              $id: 'vivliostyle-id',
-              title: 'vivliostyle — enjoy css type setting!',
-              url: 'https://vivliostyle.org',
-              snapshot: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/vivliostyle_screenshot.png'
-            },
-            {
-              $id: 'nano-id',
-              title: 'nano ID at evil martians',
-              url: 'https://evilmartians.com/opensource/nanoid',
-              snapshot: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/nanoid_screenshot.png',
-              icon: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/nanoid_icon.ico'
-            },
-            {
-              $id: 'bliss-js-id',
-              title: 'bliss.js — heavenly javascript',
-              url: 'https://blissfuljs.com/index.html'
-            },
-            {
-              $id: 'runebook-id',
-              title: 'runebook.dev',
-              url: 'https://runebook.dev',
-              snapshot: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/runebook_screenshot.png',
-              icon: '/heimdall-layouts/tests/suites/dashboard/widget/views/assets/images/runebook_icon.ico'
-            }
+            'writesonic-id', 'neutralino-id', 'detect-firefox-css-id', 'vivliostyle-id',
+            'nano-id', 'bliss-js-id', 'runebook-id'
           ]
+            .map(id => lastItems.find(({ $id }) => $id === id))
+            .map(
+              ({ $id, title, url, snapshot, icon, type }) =>
+                ({ $id, title, url, snapshot, icon, type })
+            )
         }
       }
     })
@@ -933,4 +896,54 @@ test('reminded from more than 20 items', async ({ page, lastItems, config }) => 
   await page.goto(getComponentUrl())
   await page.evaluate(() => window.mockMathRandom(0.7, 0.2, 0.999999, 0.9, 0.5, 0.6))
   return remindedLoad
+})
+
+test.describe('on mobile', () => {
+  test.use({
+    viewport: { width: 375, height: 667 },
+    hasTouch: true
+  })
+
+  test('body loading existing reminded', async ({ page, lastItems, config }) => {
+    await page.route(
+      '/api/get-config/dashboard',
+
+      route => route.fulfill({
+        json: {
+          ...config,
+
+          reminded: {
+            lastModified: Date.now(),
+
+            items: [
+              'writesonic-id', 'neutralino-id', 'detect-firefox-css-id', 'vivliostyle-id',
+              'nano-id', 'bliss-js-id', 'runebook-id'
+            ]
+              .map(id => lastItems.find(({ $id }) => $id === id))
+              .map(
+                ({ $id, title, url, snapshot, icon, type }) =>
+                  ({ $id, title, url, snapshot, icon, type })
+              )
+          }
+        }
+      })
+    )
+
+    const itemsLoadSequences = [
+      [2, 1, 3, 7],
+      [0, 1, 2, 5, 3, 6, 7],
+      lastItems.map((_, index) => index)
+    ]
+
+    for (const itemLoadSequence of itemsLoadSequences) {
+      await page.route(
+        '/api/find-items',
+        route => route.fulfill({ json: itemLoadSequence.map(index => lastItems[index]) }),
+        { times: 1 }
+      )
+    }
+
+    await page.goto(getComponentUrl())
+    await expect(page).toHaveScreenshot(getScreenshotPath('reminded-mobile'))
+  })
 })

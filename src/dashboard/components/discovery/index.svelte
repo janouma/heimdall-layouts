@@ -138,7 +138,7 @@
 <style lang="postcss">
   :host {
     &(.has-items) {
-      display: inline-block;
+      display: block;
     }
 
     & > div {
