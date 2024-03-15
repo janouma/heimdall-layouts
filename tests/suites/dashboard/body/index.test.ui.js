@@ -127,7 +127,7 @@ test('widget addition without existing config', async ({ page, lastItems }) => {
 
   await page.route(
     '/api/get-config/dashboard',
-    route => route.fulfill({ json: null })
+    route => route.fulfill()
   )
 
   await page.route(

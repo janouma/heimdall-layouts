@@ -40,7 +40,7 @@ const upToDateConfig = {
 const NativeDate = Date
 const nativePerformance = performance
 
-test('successfull update', ({ expect }) => {
+test('successfull update with existing pined', ({ expect }) => {
   let config = structuredClone(initialConfig)
 
   for (let version = 0; version < updates?.length; version++) {
@@ -64,3 +64,16 @@ test('successfull update', ({ expect }) => {
       performance: nativePerformance
     })
   })
+
+test('successfull update without pined', ({ expect }) => {
+  const source = structuredClone(initialConfig)
+  delete source.pined
+
+  let config = source
+
+  for (let version = 0; version < updates?.length; version++) {
+    config = updates[version](config)
+  }
+
+  expect(config).toEqual(source)
+})

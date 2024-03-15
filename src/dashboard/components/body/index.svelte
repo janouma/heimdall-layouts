@@ -96,16 +96,18 @@
   async function updateConfig () {
     configFetched = false
 
-    const config = await getConfig({
-      layout: 'dashboard',
-      updates: configUpdates
-    })
+    try {
+      const config = await getConfig({
+        layout: 'dashboard',
+        updates: configUpdates
+      })
 
-    if (config) {
-      ({ pined, reminded: remindedConfig } = config)
+      if (config) {
+        ({ pined, reminded: remindedConfig } = config)
+      }
+    } finally {
+      configFetched = true
     }
-
-    configFetched = true
   }
 
   function showItemContent ({ detail: item }) {

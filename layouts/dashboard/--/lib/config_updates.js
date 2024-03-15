@@ -4,7 +4,7 @@ function updateFromV0ToV1 (config) {
   return {
     ...config,
 
-    pined: config.pined.map(workspace => ({
+    pined: config.pined?.map(workspace => ({
       id: gererateId(workspace),
       title: workspace,
 
