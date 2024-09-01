@@ -65,7 +65,7 @@ export default async function renderLayout (layout) {
   await import(`../../layouts/${layout}/index.js`)
 
   const tagName = layout.replaceAll('_', '-')
-  const layoutComponent = document.createElement('hdl-' + tagName)
+  const layoutComponent = document.createElement(`hdl-${tagName}-body`)
   layoutComponent.classList.add('absolute')
   layoutComponent.layoutContext = layoutContext
   document.querySelector('hdl-layout-placeholder').replaceWith(layoutComponent)

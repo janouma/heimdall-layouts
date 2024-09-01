@@ -1,7 +1,4 @@
-<svelte:options
-  immutable={true}
-  tag="hdl-${__LAYOUT_FOLDER__.replaceAll('_', '-')}-${__COMPONENT_FOLDER__.replaceAll('_', '-')}"
-/>
+<svelte:options immutable={true} />
 
 <script>
   import 'joi'

@@ -1,1 +1,1 @@
-import './body/index.js'
+import './hdl_dashboard_body/index.js'

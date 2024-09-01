@@ -1,15 +1,20 @@
 import { devices } from '@playwright/test'
 import { existsSync } from 'fs'
 
-const chromeBinPathes = [
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  '/usr/bin/google-chrome'
-]
+const chromeBinPathes = process.env.chromeBinPathes?.split(',') ?? []
 
-const screenshotConfig = { maxDiffPixelRatio: 0.0125 }
+const screenshotConfig = {
+  maxDiffPixelRatio: 0.00625
+}
+
+const testResults = 'test-results'
 
 export default {
+  workers: '33%',
   testDir: 'tests',
+
+  // Folder for test artifacts such as screenshots, videos, traces, etc.
+  outputDir: testResults,
 
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
@@ -27,7 +32,10 @@ export default {
   fullyParallel: true,
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html', { open: 'never' }]],
+  reporter: [[
+    '@byfrost/utils/tests/helpers/reporter.js',
+    { outputFile: testResults + '/failures.json' }
+  ]],
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 
@@ -36,6 +44,8 @@ export default {
   retries: parseInt(process.env.PLAYWRIGHT_RETRY, 10) ?? 0,
 
   use: {
+    screenshot: process.env.PLAYWRIGHT_SCREENSHOT || undefined,
+
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
 
@@ -44,7 +54,8 @@ export default {
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    ignoreHTTPSErrors: true
+    ignoreHTTPSErrors: true,
+    video: 'retain-on-failure'
   },
 
   /* Configure projects for major browsers */

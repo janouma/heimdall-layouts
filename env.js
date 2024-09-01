@@ -1,6 +1,6 @@
-import argsUtils from '@heimdall/utils/lib/args.js'
+import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
 
-const args = argsUtils.argsArrayToArgsObject()
+const args = argsArrayToArgsObject()
 const useDevPort = args.useDevPort?.trim().toLowerCase() === 'yes'
 
 let enableSourceMap

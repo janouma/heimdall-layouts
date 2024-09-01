@@ -6,10 +6,10 @@ const components = readdirSync('src', { withFileTypes: true })
   .filter(
     entry =>
       entry.isDirectory() &&
-      existsSync(join(entry.path, entry.name, 'components'))
+      existsSync(join(entry.parentPath, entry.name, 'components'))
   )
   .flatMap(
-    ({ path: layoutPath, name: layoutName }) =>
+    ({ parentPath: layoutPath, name: layoutName }) =>
       readdirSync(join(layoutPath, layoutName, 'components'), { withFileTypes: true })
         .filter(({ name }) => !name.startsWith('.'))
         .map(({ name: componentName }) => `${layoutName}/${componentName}`)

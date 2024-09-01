@@ -1,14 +1,11 @@
-<svelte:options
-  immutable={true}
-  tag="hdl-${__LAYOUT_FOLDER__.replaceAll('_', '-')}"
-/>
+<svelte:options immutable={true} />
 
 <script>
   import 'joi'
   import { onMount } from 'svelte'
   import { createValidator } from 'lib/validation.js'
 
-  const componentDisplayName = '${__LAYOUT_FOLDER__}/body'
+  const componentDisplayName = '${__LAYOUT_FOLDER__}/hdl_${__LAYOUT_NAME__}_body'
   const { joi } = window
   const validate = createValidator(componentDisplayName)
 
@@ -30,11 +27,11 @@
   :host {
     --main-header-height: 3.93em;
     --side-menu-width: 0;
-    
+
     @media (width > env(--small-screen)) {
       --side-menu-width: 4.78em;
     }
-    
+
     padding: var(--main-header-height) 0 0 var(--side-menu-width);
     box-sizing: border-box;
     display: block;

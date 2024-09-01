@@ -2,6 +2,8 @@ export function getComponentHelpers ({ layout, component } = {}) {
   if (!layout) { throw new Error('layout argument is missing') }
   if (!component) { throw new Error('component argument is missing') }
 
+  const testViewsPath = `/tests/suites/${layout}/hdl_${layout}_${component}/views`
+
   return {
     getComponentUrl ({ params = null } = {}) {
       const parsedParams = params
@@ -14,12 +16,12 @@ export function getComponentHelpers ({ layout, component } = {}) {
         )
         : params
 
-      return `/tests/suites/${layout}/${component}/views/?env=playwright&params=${encodeURIComponent(JSON.stringify(parsedParams))}`
+      return `${testViewsPath}/?env=playwright&params=${encodeURIComponent(JSON.stringify(parsedParams))}`
     },
 
     getComponentAssetPath (asset) {
       if (!asset) { throw new Error('asset argument is missing') }
-      return `/tests/suites/${layout}/${component}/views/assets/${asset}`
+      return `${testViewsPath}/assets/${asset}`
     },
 
     getScreenshotPath (useCase, name = 'screenshot') {

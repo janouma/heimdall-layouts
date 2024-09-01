@@ -1,9 +1,9 @@
 import shell from 'shelljs'
 import { join } from 'path'
 import { existsSync } from 'fs'
-import argsUtils from '@heimdall/utils/lib/args.js'
+import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
 
-const args = argsUtils.argsArrayToArgsObject()
+const args = argsArrayToArgsObject()
 
 if (!args.name?.trim()) {
   throw new Error('"component" argument is missing')

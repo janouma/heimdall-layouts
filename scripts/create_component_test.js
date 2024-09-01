@@ -1,12 +1,12 @@
 import { join } from 'path'
-import argsUtils from '@heimdall/utils/lib/args.js'
-import renderString from 'es6-template-strings'
+import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
+import { render as renderString } from '@byfrost/utils/string.js'
 import fsExtraCjs from 'fs-extra'
 
 const { copySync, readFileSync, writeFileSync, existsSync } = fsExtraCjs
 
 const componentPathPattern = /^([a-z0-9]+)(_[a-z0-9]+)*\/([a-z0-9]+)(_[a-z0-9]+)*$/
-const componentPath = argsUtils.argsArrayToArgsObject().name?.trim()
+const componentPath = argsArrayToArgsObject().name?.trim()
 
 if (!componentPath?.match(componentPathPattern)) {
   throw new Error(componentPath + " doesn't match " + componentPathPattern)
