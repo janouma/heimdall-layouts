@@ -1,4 +1,9 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+if git branch | grep -q '^\* (no branch'; then
+  echo "Skipping pre-commit hook in rebase" >&2
+  exit 0
+fi
+
 npm run build:shared && npx lint-staged
