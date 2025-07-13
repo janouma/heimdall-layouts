@@ -41,7 +41,7 @@ export default {
 
   snapshotDir: 'test-snapshots/local',
   testMatch: '**/*.test.ui.js',
-  retries: parseInt(process.env.PLAYWRIGHT_RETRY, 10) ?? 0,
+  retries: parseInt(process.env.PLAYWRIGHT_RETRY, 10) || 0,
 
   use: {
     screenshot: process.env.PLAYWRIGHT_SCREENSHOT || undefined,

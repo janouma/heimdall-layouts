@@ -37,9 +37,9 @@
   },
   "devDependencies": {
     "@apexearth/egrep": "^1.0.9",
-    "@byfrost/core": "^0.5.0",
-    "@byfrost/svelte": "^0.5.0",
-    "@byfrost/vue": "^0.5.0",
+    "@byfrost/core": "^0.5.1",
+    "@byfrost/svelte": "^0.5.1",
+    "@byfrost/vue": "^0.5.1",
     "@japa/expect": "^2.0.2",
     "@japa/run-failed-tests": "^1.1.1",
     "@japa/runner": "^2.5.1",
@@ -67,8 +67,8 @@
     "testdouble": "^3.18.0"
   },
   "dependencies": {
-    "@byfrost/utils": "^1.0.0",
-    "@heimdall/shared-lib": "^1.4.3",
+    "@byfrost/utils": "^1.0.1",
+    "@heimdall/shared-lib": "^1.4.4",
     "basscss": "^8.0.3",
     "basscss-btn": "^1.1.1",
     "element-adapter": "^2.0.1",

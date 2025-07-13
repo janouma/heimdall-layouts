@@ -12,13 +12,14 @@ if (!componentPath?.match(componentPathPattern)) {
   throw new Error(componentPath + " doesn't match " + componentPathPattern)
 }
 
-const [layoutFolder, componentFolder] = componentPath.split('/')
+const [layoutFolder, componentFolderBase] = componentPath.split('/')
 const layoutSource = join('src', layoutFolder)
 
 if (!existsSync(layoutSource)) {
   throw new Error(`${layoutFolder} layout doesn‘t exists`)
 }
 
+const componentFolder = `hdl_${layoutFolder}_${componentFolderBase}`
 const source = join(layoutSource, 'components', componentFolder)
 
 if (existsSync(source)) {
