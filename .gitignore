@@ -10,3 +10,4 @@ node_modules
 /playwright/.cache/
 /heimdall-layouts/
 heimdall-layouts
+*.pem
