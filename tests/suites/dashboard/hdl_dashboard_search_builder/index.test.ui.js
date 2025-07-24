@@ -67,8 +67,8 @@ test.describe('desktop', () => {
   test('title validation', async ({ page }) => {
     await page.goto(getComponentUrl())
 
-    const titleInput = await page.getByPlaceholder('name your search')
-    const submit = await page.getByRole('button', { name: 'pin' })
+    const titleInput = page.getByPlaceholder('name your search')
+    const submit = page.getByRole('button', { name: 'pin' })
     await expect(submit).toBeDisabled()
 
     await titleInput.fill('   re   ')
@@ -90,12 +90,12 @@ test.describe('desktop', () => {
     await page.goto(getComponentUrl())
 
     const title = 'books'
-    const previewTitle = await page.getByRole('heading', { name: 'preview' })
-    const preview = await previewTitle.locator(':scope + *')
-    const loading = await page.locator('loading-animation')
-    const draftSwitch = await page.getByLabel('drafts')
-    const folderBrowser = await page.locator('folder-browser')
-    const searchBar = await page.locator('search-bar')
+    const previewTitle = page.getByRole('heading', { name: 'preview' })
+    const preview = previewTitle.locator(':scope + *')
+    const loading = page.locator('loading-animation')
+    const draftSwitch = page.getByLabel('drafts')
+    const folderBrowser = page.locator('folder-browser')
+    const searchBar = page.locator('search-bar')
 
     await folderBrowser.click()
 
@@ -195,11 +195,11 @@ test.describe('desktop', () => {
 
     await page.goto(getComponentUrl())
 
-    const draftSwitch = await page.getByLabel('drafts')
-    const folderBrowser = await page.locator('folder-browser')
-    const previewTitle = await page.getByRole('heading', { name: 'preview' })
-    const preview = await previewTitle.locator(':scope + *')
-    const loading = await page.locator('loading-animation')
+    const draftSwitch = page.getByLabel('drafts')
+    const folderBrowser = page.locator('folder-browser')
+    const previewTitle = page.getByRole('heading', { name: 'preview' })
+    const preview = previewTitle.locator(':scope + *')
+    const loading = page.locator('loading-animation')
     const selectedWorkspace = 'books followup'
 
     {
@@ -297,9 +297,9 @@ test.describe('desktop', () => {
 
     await page.goto(getComponentUrl())
 
-    const previewTitle = await page.getByRole('heading', { name: 'preview' })
-    const preview = await previewTitle.locator(':scope + *')
-    const loading = await page.locator('loading-animation')
+    const previewTitle = page.getByRole('heading', { name: 'preview' })
+    const preview = previewTitle.locator(':scope + *')
+    const loading = page.locator('loading-animation')
     const title = 'limited'
     let setRoute
 
@@ -307,8 +307,8 @@ test.describe('desktop', () => {
 
     await page.route('/api/find-items', setRoute)
 
-    const limitInputWrapper = await page.locator('.max-wrapper')
-    const limitInput = await limitInputWrapper.getByLabel('limit')
+    const limitInputWrapper = page.locator('.max-wrapper')
+    const limitInput = limitInputWrapper.getByLabel('limit')
     await limitInput.evaluate(node => { node.value = 40 })
     await limitInput.dispatchEvent('input')
 
@@ -358,11 +358,11 @@ test.describe('desktop', () => {
 
     await page.goto(getComponentUrl())
 
-    const searchBar = await page.locator('search-bar')
-    const searchInput = await searchBar.getByRole('textbox')
-    const previewTitle = await page.getByRole('heading', { name: 'preview' })
-    const preview = await previewTitle.locator(':scope + *')
-    const loading = await page.locator('loading-animation')
+    const searchBar = page.locator('search-bar')
+    const searchInput = searchBar.getByRole('textbox')
+    const previewTitle = page.getByRole('heading', { name: 'preview' })
+    const preview = previewTitle.locator(':scope + *')
+    const loading = page.locator('loading-animation')
     const title = 'lightening'
     let setRoute
     let apiCall = new Promise(resolve => { setRoute = resolve })
@@ -430,9 +430,9 @@ test.describe('desktop', () => {
     await page.goto(getComponentUrl())
 
     const title = 'drafts'
-    const searchBar = await page.locator('search-bar')
-    const searchInput = await searchBar.getByRole('textbox')
-    const draftSwitch = await page.getByLabel('drafts')
+    const searchBar = page.locator('search-bar')
+    const searchInput = searchBar.getByRole('textbox')
+    const draftSwitch = page.getByLabel('drafts')
 
     searchInput.fill('dra')
     await searchBar.getByText('draft').click()
@@ -510,9 +510,9 @@ test.describe('resized desktop', () => {
 
     await page.goto(getComponentUrl())
 
-    const previewTitle = await page.getByRole('heading', { name: 'preview' })
-    const preview = await previewTitle.locator(':scope + *')
-    const items = await preview.getByRole('listitem')
+    const previewTitle = page.getByRole('heading', { name: 'preview' })
+    const preview = previewTitle.locator(':scope + *')
+    const items = preview.getByRole('listitem')
     await items.first().waitFor()
 
     await expect(preview)

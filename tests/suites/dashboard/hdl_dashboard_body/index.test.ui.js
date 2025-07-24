@@ -374,7 +374,7 @@ test('widget removal', async ({ page, lastItems, config }) => {
 
   await page.goto(getComponentUrl())
 
-  const widget = await page.locator('css=.pined', {
+  const widget = page.locator('css=.pined', {
     has: page.getByRole('heading', { name: 'pending' })
   })
 

@@ -448,7 +448,7 @@ npm test -- <layout name>/<component name>
 ## Local certificate renew command
 
 ```bash
-mkcert eleven.local localhost
+mkcert [remote.hostname] localhost
 ```
 
 More on mkcert [https://words.filippo.io/mkcert-valid-https-certificates-for-localhost/](https://words.filippo.io/mkcert-valid-https-certificates-for-localhost/)

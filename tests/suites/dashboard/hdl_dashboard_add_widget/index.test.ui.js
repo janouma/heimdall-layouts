@@ -13,7 +13,7 @@ test('add widget button', async ({ page }) => {
   await page.goto(getComponentUrl())
   await expect(page.locator('css=.wrapper')).toHaveScreenshot(getScreenshotPath('idle'))
 
-  const button = await page.getByRole('button')
+  const button = page.getByRole('button')
   await button.hover()
 
   await expect(button).toHaveCSS('background-color', 'rgba(34, 32, 56, 0.5)')
