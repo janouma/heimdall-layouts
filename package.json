@@ -67,7 +67,7 @@
     "testdouble": "^3.18.0"
   },
   "dependencies": {
-    "@byfrost/utils": "^1.0.1",
+    "@byfrost/utils": "^1.0.2",
     "@heimdall/shared-lib": "^1.4.7",
     "basscss": "^8.0.3",
     "basscss-btn": "^1.1.1",
