@@ -5,7 +5,7 @@ import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
 import { green, red, magenta } from '@byfrost/utils/console.js'
 import playwrightConfig from '../playwright.config.js'
 
-const { maxAttempts } = argsArrayToArgsObject()
+const { maxAttempts, reporter: forcedReporter } = argsArrayToArgsObject()
 
 if (maxAttempts == null) {
   throw new Error('maxAttempts argument is missing')
@@ -46,10 +46,11 @@ if (existsSync(failuresReport)) {
       return `\\b${project}\\b.+(${projectFilter})`
     }).join('|')
 
-  const command = `npm run test:ui -- --grep '"${filter}"'`
+  const reporterOption = forcedReporter ? '--reporter=' + forcedReporter : ''
+  const command = `npm run test:ui -- --grep '"${filter}"' ${reporterOption}`
 
   const fallBackCommand = maxAttempts > 1
-    ? `npm run test:ui:retry -- maxAttempts=${maxAttempts - 1}`
+    ? `npm run test:ui:retry -- maxAttempts=${maxAttempts - 1} reporter=${forcedReporter}`
     : `echo "${red('✘ all attempts failed')}"`
 
   try {
