@@ -4,6 +4,7 @@ import globals from 'globals'
 import importPlugin from 'eslint-plugin-import'
 import n from 'eslint-plugin-n'
 import promise from 'eslint-plugin-promise'
+import babelEslintParser from '@babel/eslint-parser'
 
 const standard = structuredClone(eslintConfigStandard)
 
@@ -55,6 +56,12 @@ export default [
       ]
     },
     processor: 'svelte/svelte'
+  },
+  {
+    files: ['**/*.js', '**/*.cjs'],
+    languageOptions: {
+      parser: babelEslintParser
+    }
   },
   {
     settings: {

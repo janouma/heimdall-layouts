@@ -23,6 +23,7 @@
   export let layoutContext
 
   let pined
+  // FIXME: import messages from '../assets/messages.json' with { type: 'json' }
   let messages
   let remindedConfig
   let pinBoard

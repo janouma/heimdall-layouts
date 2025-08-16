@@ -37,6 +37,9 @@
   },
   "devDependencies": {
     "@apexearth/egrep": "^1.0.9",
+    "@babel/core": "^7.12.7",
+    "@babel/eslint-parser": "^7.12.17",
+    "@babel/preset-env": "^7.28.0",
     "@byfrost/core": "^0.5.1",
     "@byfrost/svelte": "^0.5.1",
     "@byfrost/vue": "^0.5.1",
