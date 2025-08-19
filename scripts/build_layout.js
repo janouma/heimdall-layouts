@@ -1,9 +1,17 @@
 import shell from 'shelljs'
-import { join } from 'path'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
-import argsUtils from '@heimdall/utils/lib/args.js'
+import { join, dirname } from 'path'
 
-const args = argsUtils.argsArrayToArgsObject()
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  statSync
+} from 'fs'
+
+import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
+
+const args = argsArrayToArgsObject()
 const layoutName = args.name?.trim()
 
 if (!layoutName) {
@@ -30,18 +38,26 @@ if (existsSync(destination)) {
 
 shell.mkdir(destination)
 
-const statics = shell.find(join(source, '*')).filter(file => !file.match(new RegExp(`/components/?|\\.DS_Store$|^${source}/[^/](?=.+/)|.*\\.afdesign$`)))
+const statics = shell.find(join(source, '*'))
+  .filter(
+    file => !file.match(/\/components\/?|\.DS_Store|.*\.afdesign\b/) &&
+      file.match(/\/assets\/|layout\.json\b/) && statSync(file).isFile()
+  )
 
 console.debug('statics:', statics)
 
-shell.cp('-R', statics, destination)
+for (const staticFile of statics) {
+  const relativeStatic = staticFile.replace(source, '')
+  const destinationFile = join(destination, relativeStatic)
+  shell.mkdir('-p', dirname(destinationFile))
+  shell.cp(staticFile, destinationFile)
+}
 
 const componentsDir = join(source, 'components')
 
-const components = [
-  'header',
-  'body'
-].filter(component => existsSync(join(componentsDir, component)))
+const components = readdirSync(componentsDir, { withFileTypes: true })
+  .filter(entry => entry.isDirectory() && entry.name.match(/\w_(body|header)$/))
+  .map(({ name }) => name)
 
 console.debug('components:', components)
 

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <style>
+      .wrapper {
+        display: inline-block;
+        padding: 1em;
+        background-color: #14074E;
+
+        background-image:
+          url(../../../../suites/dashboard/hdl_dashboard_widget/views/assets/images/stars.png),
+          linear-gradient(-45deg, rgba(var(--sky), 50%), transparent);
+      }
+
+      hdl-dashboard-widget {
+        max-width: 25em;
+      }
+    </style>
+    <script type="module" src="../../../../../layouts/dashboard/hdl_dashboard_widget/index.js"></script>
+    <script type="module">
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { mockSetTimeout } from '../../../../helpers/api.js'
+      import { applyParameters } from '../../../../helpers/parameters.js'
+
+      if (isTestEnv()) {
+        mockSetTimeout()
+      }
+
+      const response = await fetch('../../../../fixtures/dashboard/last_items.json')
+      const lastItems = await response.json()
+      const widget = document.createElement('hdl-dashboard-widget')
+
+      widget.addEventListener('show-item-content', ({ detail: item }) => console.debug('show content for item:', item))
+
+      widget.addEventListener('remove', () => console.debug('remove'))
+      widget.addEventListener('edit', () => console.debug('edit'))
+      widget.addEventListener('expand', () => console.debug('expand'))
+
+      applyParameters(widget, {
+        title: 'recently added',
+        maxvisible: 7,
+        items: lastItems,
+        readonly: '',
+
+        messages: {
+          iconalt: 'Icon of item',
+          deletetitle: 'Unpin workspace',
+          editTitle: 'Update search',
+          confirmTitle: 'Confirm search unpin',
+          abortTitle: 'Abort search unpin',
+          expandTitle: 'Expand search'
+        }
+      })
+
+      document.querySelector('.wrapper').appendChild(widget)
+    </script>
+  </head>
+  <body>
+    <div class="wrapper"></div>
+  </body>
+</html>

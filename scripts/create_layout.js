@@ -1,11 +1,17 @@
 import { join } from 'path'
-import argsUtils from '@heimdall/utils/lib/args.js'
+import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
+import { render as renderString } from '@byfrost/utils/string.js'
 import egrep from '@apexearth/egrep'
 import { promisify } from 'util'
-import renderString from 'es6-template-strings'
 import fsExtraCjs from 'fs-extra'
 
-const { copySync, readFileSync, writeFileSync, existsSync } = fsExtraCjs
+const {
+  copySync,
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  renameSync
+} = fsExtraCjs
 
 const layoutFolderPattern = /^([a-z0-9]+)(_[a-z0-9]+)*$/
 
@@ -14,7 +20,7 @@ const {
   folder = convertToValidFolder(layoutName),
   media,
   useDefaultHeader
-} = Object.entries(argsUtils.argsArrayToArgsObject())
+} = Object.entries(argsArrayToArgsObject())
   .reduce((args, [name, value]) => Object.assign(args, { [name]: value?.trim() }), {})
 
 if (layoutName?.length < 2) {
@@ -84,6 +90,11 @@ if (layoutName !== folder || media || useDefaultHeader) {
 
   writeFileSync(join(source, 'layout.json'), JSON.stringify(layoutDescriptor, undefined, 2))
 }
+
+renameSync(
+  join(source, 'components', 'body'),
+  join(source, 'components', `hdl_${folder}_body`)
+)
 
 console.info(layoutName + ' layout successfully created')
 

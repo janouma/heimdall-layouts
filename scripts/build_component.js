@@ -1,11 +1,11 @@
 import shell from 'shelljs'
 import { join } from 'path'
 import { existsSync } from 'fs'
-import argsUtils from '@heimdall/utils/lib/args.js'
+import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
 import env from '../env.js'
 
-const { enableSourceMap, origin } = env
-const args = argsUtils.argsArrayToArgsObject()
+const { enableSourceMap, origin, logLevel = 'info' } = env
+const args = argsArrayToArgsObject()
 
 if (!args.name?.trim()) {
   throw new Error('"component" argument is missing')
@@ -28,7 +28,7 @@ const componentDestinationPath = join(destination, component)
 shell.mkdir('-p', componentDestinationPath)
 
 const compileResult = shell.exec(
-  `utils-compile-svelte source="${source}" destination="${destination}" sourceMap=${enableSourceMap} \\
+  `LOG_LEVEL=${logLevel} npx @byfrost/core compile source="${source}" destination="${destination}" sourceMap=${enableSourceMap} \\
     prefix=${origin}/${destination}`
 )
 

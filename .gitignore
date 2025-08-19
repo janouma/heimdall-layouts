@@ -6,8 +6,8 @@ node_modules
 .env
 .env.*
 /test-results/
-/test-snapshots/local/
 /playwright-report/
 /playwright/.cache/
 /heimdall-layouts/
 heimdall-layouts
+*.pem

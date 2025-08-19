@@ -6,7 +6,7 @@ To be able to install and run this project, it is necessary to have access to `@
 
 ```bash
 npm config set @heimdall:registry <heimdall private registry url>
-``` 
+```
 
 It is also mandatory to add a user having permissions to access the private repository:
 
@@ -444,5 +444,13 @@ To run the test, use the following command:
 ```bash
 npm test -- <layout name>/<component name>
 ```
+
+## Local certificate renew command
+
+```bash
+mkcert [remote.hostname] localhost
+```
+
+More on mkcert [https://words.filippo.io/mkcert-valid-https-certificates-for-localhost/](https://words.filippo.io/mkcert-valid-https-certificates-for-localhost/)
 
 ## [Api documentation](https://janouma.github.io/heimdall-layouts/doc/api)

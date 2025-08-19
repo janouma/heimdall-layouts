@@ -9,8 +9,8 @@
       import { applyParameters } from '../../../../helpers/parameters.js'
       ${__COMPONENT_FOLDER__ === 'body' ? "import * as layoutContext from '../../../../helpers/layout_context.js'" : ''}
 
-      const component = document.createElement('hdl-${__LAYOUT_FOLDER__.replaceAll("_", "-")}${__COMPONENT_FOLDER__ !== "body" ? "-" + __COMPONENT_FOLDER__.replaceAll("_", "-") : ""}')
-      
+      const component = document.createElement('${__COMPONENT_FOLDER__.replaceAll("_", "-")}')
+
       applyParameters(
         component,
         {

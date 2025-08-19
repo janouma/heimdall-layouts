@@ -4,7 +4,7 @@ import { existsSync } from 'fs'
 import createSimpleGit from 'simple-git'
 import env from '../env.js'
 
-const { enableSourceMap, origin } = env
+const { enableSourceMap, origin, logLevel = 'info' } = env
 const componentsDir = join('node_modules', '@heimdall/shared-lib', 'components')
 const destinationDir = 'shared_components'
 
@@ -16,7 +16,7 @@ const components = shell.exec(`find ${componentsDir} -mindepth 1 -maxdepth 1 -ty
   .stdout.trim().split('\n')
 
 for (const component of components) {
-  const command = `utils-compile-svelte source=${component} destination=${destinationDir} \\
+  const command = `LOG_LEVEL=${logLevel} npx @byfrost/core compile source=${component} destination=${destinationDir} \\
     sourceMap=${enableSourceMap} prefix=${origin}/shared_components`
 
   const compileResult = shell.exec(command)
