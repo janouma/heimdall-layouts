@@ -35,25 +35,15 @@
   $: tags = layoutContext?.state.tags
   $: connections = layoutContext?.state.connections
   $: tagAliases = layoutContext?.computed.tagAliases
-  $: userId = encodeURIComponent($session?.user.$id)
   $: pinedTitles = pined?.map(({ title }) => title)
 
   $: validate(layoutContext, 'layoutContext', joi.object().unknown())
 
   $: if (layoutContext) {
-    layoutContext.sseClient.subscribe(
-      `/api/${userId}/notification`,
-      updateItems,
-      logAnyError
-    )
-
-    layoutContext.sseClient.subscribe(
-      `/api/${userId}/notification/dashboard`,
-      updateConfig,
-      logAnyError
-    )
-
+    layoutContext.sseClient.subscribe('notification', updateItems)
+    layoutContext.sseClient.subscribe('notification', updateScopedConfig)
     layoutContext.sseClient.onConnect(updateConfig)
+    layoutContext.sseClient.onConnectionRestored(updateConfig)
   }
 
   onMount(async () => {
@@ -68,17 +58,12 @@
 
   onDestroy(() => {
     if (layoutContext) {
-      layoutContext.sseClient.unsubscribe(`/api/${userId}/notification`, updateItems)
-      layoutContext.sseClient.unsubscribe(`/api/${userId}/dashboard/notification`, updateConfig)
+      layoutContext.sseClient.unsubscribe('notification', updateItems)
+      layoutContext.sseClient.unsubscribe('notification', updateScopedConfig)
       layoutContext.sseClient.offConnect(updateConfig)
+      layoutContext.sseClient.offConnectionRestored(updateConfig)
     }
   })
-
-  function logAnyError (error) {
-    if (error) {
-      log.error(error.toString())
-    }
-  }
 
   async function getMessages () {
     const response = await fetch(import.meta.resolve('../assets/messages.json'))
@@ -91,20 +76,28 @@
     }
   }
 
-  async function updateConfig () {
-    configFetched = false
+  function updateScopedConfig ({ scope }) {
+    if (scope === 'dashboard') {
+      return updateConfig()
+    }
+  }
 
-    try {
-      const config = await getConfig({
-        layout: 'dashboard',
-        updates: configUpdates
-      })
+  async function updateConfig ({ type } = {}) {
+    if (type === 'configUpdate' || !type) {
+      configFetched = false
 
-      if (config) {
-        ({ pined, reminded: remindedConfig } = config)
+      try {
+        const config = await getConfig({
+          layout: 'dashboard',
+          updates: configUpdates
+        })
+
+        if (config) {
+          ({ pined, reminded: remindedConfig } = config)
+        }
+      } finally {
+        configFetched = true
       }
-    } finally {
-      configFetched = true
     }
   }
 

@@ -50,7 +50,7 @@ if (existsSync(failuresReport)) {
   const command = `npm run test:ui -- --grep '"${filter}"' ${reporterOption}`
 
   const fallBackCommand = maxAttempts > 1
-    ? `npm run test:ui:retry -- maxAttempts=${maxAttempts - 1} reporter=${forcedReporter}`
+    ? `npm run test:ui:retry -- maxAttempts=${maxAttempts - 1} reporter=${reporterOption}`
     : `echo "${red('✘ all attempts failed')}"`
 
   try {
