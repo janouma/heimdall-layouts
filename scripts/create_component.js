@@ -32,7 +32,7 @@ copySync(componentTemplatePath, source)
 const template = join(source, 'index.svelte')
 
 const parsedContent = renderString(
-  readFileSync(template),
+  String(readFileSync(template)),
   {
     __LAYOUT_FOLDER__: layoutFolder,
     __COMPONENT_FOLDER__: componentFolder

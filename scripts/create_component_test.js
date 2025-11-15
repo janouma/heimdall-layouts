@@ -41,7 +41,7 @@ for (const template of [
   join(testSource, 'views', 'index.html')
 ]) {
   const parsedContent = renderString(
-    readFileSync(template),
+    String(readFileSync(template)),
     {
       __LAYOUT_FOLDER__: layoutFolder,
       __COMPONENT_FOLDER__: componentFolder
