@@ -126,17 +126,17 @@ export function dispatchGlobalEvent () {}
 export function removeGlobalEventListener () {}
 
 export const sseClient = {
-  subscribe (path, listener) {
-    console.debug('subscribed to path', path)
+  subscribe (event, listener) {
+    console.debug('subscribed to event', event)
 
     window.mockSse ??= {}
     window.mockSse.subscriptions ??= {}
-    window.mockSse.subscriptions[path] ??= []
-    window.mockSse.subscriptions[path].push(listener)
+    window.mockSse.subscriptions[event] ??= []
+    window.mockSse.subscriptions[event].push(listener)
   },
 
-  unsubscribe (path) {
-    console.debug('unsubscribe from path', path)
+  unsubscribe (event) {
+    console.debug('unsubscribe from event', event)
   },
 
   onConnect (listener) {
@@ -145,7 +145,21 @@ export const sseClient = {
     window.mockSse.connectListeners.push(listener)
   },
 
+  onConnectionLost (listener) {
+    window.mockSse ??= {}
+    window.mockSse.connectionLostListeners ??= []
+    window.mockSse.connectionLostListeners.push(listener)
+  },
+
+  onConnectionRestored (listener) {
+    window.mockSse ??= {}
+    window.mockSse.connectionRestoredListeners ??= []
+    window.mockSse.connectionRestoredListeners.push(listener)
+  },
+
   offConnect () {},
+  offConnectionLost () {},
+  offConnectionRestored () {},
   onDisconnect () {},
   offDisconnect () {}
 }

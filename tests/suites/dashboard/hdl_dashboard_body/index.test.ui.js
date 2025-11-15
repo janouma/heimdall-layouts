@@ -448,7 +448,7 @@ test('notifications', async ({ page, lastItems, config }) => {
   const itemsUpdate = page.waitForResponse(createCountListener('/api/find-items', 3))
 
   await page.evaluate(() => {
-    const listeners = window.mockSse.subscriptions['/api/user-janouma/notification']
+    const listeners = window.mockSse.subscriptions.notification
 
     for (const listener of listeners) {
       listener({ type: 'itemsUpdate' })
@@ -496,10 +496,10 @@ test('notifications', async ({ page, lastItems, config }) => {
   ])
 
   await page.evaluate(() => {
-    const listeners = window.mockSse.subscriptions['/api/user-janouma/notification/dashboard']
+    const listeners = window.mockSse.subscriptions.notification
 
     for (const listener of listeners) {
-      listener({ type: 'configUpdate' })
+      listener({ type: 'configUpdate', scope: 'dashboard' })
     }
   })
 
