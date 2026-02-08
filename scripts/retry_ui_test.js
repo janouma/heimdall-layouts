@@ -46,12 +46,12 @@ if (existsSync(failuresReport)) {
       return `\\b${project}\\b.+(${projectFilter})`
     }).join('|')
 
-  const reporterOption = forcedReporter ? '--reporter=' + forcedReporter : ''
+  const reporterOption = forcedReporter ? 'reporter=' + forcedReporter : ''
   const command = `npm run test:ui -- --grep "${filter}" ${reporterOption}`
 
   const fallBackCommand = maxAttempts > 1
     ? `npm run test:ui:retry -- maxAttempts=${maxAttempts - 1} ${reporterOption}`
-    : `echo "${red('✘ all attempts failed')}"`
+    : `(echo "${red('✘ all attempts failed')}" && exit 1)`
 
   try {
     execSync(command + ' || ' + fallBackCommand, { stdio: 'inherit' })

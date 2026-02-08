@@ -13,7 +13,8 @@ if (!args.name.match(/^[\w_]+\/[\w_]+$/)) {
   throw new Error(`"component" path is not valid (expected layout/component, actual ${args.name})`)
 }
 
-const [layout, component] = args.name.split('/')
+const [layout, componentName] = args.name.split('/')
+const component = `hdl_${layout}_${componentName}`
 const layoutSource = join('src', layout)
 const source = join(layoutSource, 'components', component)
 
@@ -26,7 +27,7 @@ const remainingArgs = Object.entries(args)
   .reduce((commanLineArgs, [name, value]) => `${commanLineArgs} ${name}=${value}`, '')
   .trim()
 
-const watchCommand = `nodemon -e js,svelte,png,svg,jpg,json,css --delay 0.5 --watch ${layoutSource} --exec "npm run build:component -- name=${layout}/${component} ${remainingArgs}"`
+const watchCommand = `nodemon -e js,svelte,png,svg,jpg,json,css --delay 0.5 --watch ${layoutSource} --exec "npm run build:component -- name=${layout}/${componentName} ${remainingArgs}"`
 
 console.debug('watch command:', watchCommand)
 

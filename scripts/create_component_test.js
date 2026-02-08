@@ -6,13 +6,15 @@ import fsExtraCjs from 'fs-extra'
 const { copySync, readFileSync, writeFileSync, existsSync } = fsExtraCjs
 
 const componentPathPattern = /^([a-z0-9]+)(_[a-z0-9]+)*\/([a-z0-9]+)(_[a-z0-9]+)*$/
-const componentPath = argsArrayToArgsObject().name?.trim()
+const componentFullyQualifiedName = argsArrayToArgsObject().name?.trim()
 
-if (!componentPath?.match(componentPathPattern)) {
-  throw new Error(componentPath + " doesn't match " + componentPathPattern)
+if (!componentFullyQualifiedName?.match(componentPathPattern)) {
+  throw new Error(componentFullyQualifiedName + " doesn't match " + componentPathPattern)
 }
 
-const [layoutFolder, componentFolder] = componentPath.split('/')
+const [layoutFolder, componentName] = componentFullyQualifiedName.split('/')
+const componentFolder = `hdl_${layoutFolder}_${componentName}`
+const componentPath = `${layoutFolder}/${componentFolder}`
 
 const layoutSource = join('src', layoutFolder)
 const source = join(layoutSource, 'components', componentFolder)

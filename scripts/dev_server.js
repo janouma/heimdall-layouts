@@ -1,4 +1,5 @@
 import browserSync from 'browser-sync'
+import env from '../env.js'
 
 browserSync({
   server: '.',
@@ -8,7 +9,7 @@ browserSync({
     cert: 'assets/ssl/cert.pem'
   },
 
-  port: process.env.devPort,
+  port: env.port,
   open: false,
   ui: false,
   cors: true,

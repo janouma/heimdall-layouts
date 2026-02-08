@@ -3,11 +3,11 @@ node_modules
 *.map
 .cache
 .npmrc
-.env
-.env.*
 /test-results/
 /playwright-report/
 /playwright/.cache/
 /heimdall-layouts/
 heimdall-layouts
 *.pem
+project.*.config.js
+!project.example.config.js

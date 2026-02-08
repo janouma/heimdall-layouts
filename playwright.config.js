@@ -1,7 +1,5 @@
 import { devices } from '@playwright/test'
-import { existsSync } from 'fs'
-
-const chromeBinPathes = process.env.chromeBinPathes?.split(',') ?? []
+import env from './env.js'
 
 const screenshotConfig = {
   maxDiffPixelRatio: 0.00625
@@ -50,7 +48,7 @@ export default {
     actionTimeout: 0,
 
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'https://localhost:' + process.env.testPort,
+    baseURL: 'https://localhost:' + env.port,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -65,28 +63,19 @@ export default {
       expect: { toHaveScreenshot: { ...screenshotConfig, scale: 'device' } },
 
       use: {
-        ...(
-          chromeBinPathes.some(existsSync)
-            ? { channel: 'chrome' }
-            : { ...devices['Desktop Chrome'] }
-        ),
-
+        ...devices['Desktop Chrome'],
         deviceScaleFactor: 1.5
       }
     },
 
     {
       name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox']
-      }
+      use: { ...devices['Desktop Firefox'] }
     },
 
     {
       name: 'webkit',
-      use: {
-        ...devices['Desktop Safari']
-      }
+      use: { ...devices['Desktop Safari'] }
     }
   ]
 

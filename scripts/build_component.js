@@ -15,7 +15,8 @@ if (!args.name.match(/^[\w_]+\/[\w_]+$/)) {
   throw new Error(`"component" path is not valid (expected layout/component, actual ${args.name})`)
 }
 
-const [layout, component] = args.name.split('/')
+const [layout, componentName] = args.name.split('/')
+const component = `hdl_${layout}_${componentName}`
 const source = join('src', layout, 'components', component)
 
 if (!existsSync(source)) {

@@ -69,7 +69,8 @@ const remainingArgs = Object.entries(args)
   .trim()
 
 for (const component of components) {
-  const compileResult = shell.exec(`npm run build:component -- name=${layoutName}/${component} ${remainingArgs}`)
+  const componentName = component.replace(new RegExp(`^hdl_${layoutName}_`), '')
+  const compileResult = shell.exec(`npm run build:component -- name=${layoutName}/${componentName} ${remainingArgs}`)
 
   if (compileResult.code > 0) {
     throw new Error('failed to compile component ' + component)

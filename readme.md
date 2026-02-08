@@ -327,16 +327,15 @@ Remove application level event listener
       <td>subscribe</td>
       <td>Add listener to server event</td>
       <td>
-        path – string<br/>
-        listener – function<br/>
-        error logger – function
+        event – string<br/>
+        listener – function
       </td>
     </tr>
     <tr>
       <td>unsubscribe</td>
       <td>Remove listener to server event</td>
       <td>
-        path – string<br/>
+        event – string<br/>
         listener – function
       </td>
     </tr>
