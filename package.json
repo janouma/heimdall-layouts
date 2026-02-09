@@ -17,7 +17,7 @@
     "setup:test:ui": "NODE_ENV=test npm run build:shared && NODE_ENV=test npm run build:all-components",
     "test:ui": "NODE_ENV=test npx playwright test",
     "test:ui:retry": "NODE_ENV=test node scripts/retry_ui_test.js",
-    "teardown:test:ui": "git checkout layouts && git checkout shared_components",
+    "teardown:test:ui": "git restore --staged layouts && git restore layouts && git restore --staged shared_components && git restore shared_components",
     "create:layout": "node scripts/create_layout",
     "build:layout": "node scripts/build_layout",
     "build:all-components": "node scripts/build_all_components",
