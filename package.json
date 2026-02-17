@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "prepare": "husky install",
-    "postinstall": "NODE_ENV=development node scripts/postinstall",
+    "postinstall": "node scripts/postinstall",
     "start": "NODE_ENV=development node scripts/dev_server",
     "start:test": "NODE_ENV=test node scripts/test_server",
     "startd": "npm start &> server.log &",
