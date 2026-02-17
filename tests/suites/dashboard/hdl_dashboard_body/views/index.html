@@ -17,8 +17,8 @@
 
       if (!isTestEnv()) {
         {
-          const response = await fetch('../../../../fixtures/dashboard/last_items.json')
-          const lastItems = await response.json()
+          const { default: lastItems } =
+            await import('../../../../fixtures/dashboard/last_items.json', { with: { type: 'json' } })
 
           mockApiResponse({
             url: '/api/find-items',
@@ -46,8 +46,7 @@
         }
 
         {
-          const response = await fetch('../../../../fixtures/dashboard/config.json')
-          const config = await response.json()
+          const { default: config } = await import('../../../../fixtures/dashboard/config.json', { with: { type: 'json' } })
 
           mockApiResponse({
             url: '/api/get-config/dashboard',

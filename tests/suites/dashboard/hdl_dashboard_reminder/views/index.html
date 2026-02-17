@@ -9,14 +9,13 @@
       import { isTestEnv } from '../../../../helpers/env.js'
       import { mockRequestAnimationFrame, mockSetTimeout } from '../../../../helpers/api.js'
       import { applyParameters } from '../../../../helpers/parameters.js'
+      import items from '../../../../fixtures/dashboard/last_items.json' with { type: 'json' }
 
       if (isTestEnv()) {
         mockRequestAnimationFrame()
         mockSetTimeout(false)
       }
 
-      const response = await fetch('../../../../fixtures/dashboard/last_items.json')
-      const items = await response.json()
       const reminder = document.createElement('hdl-dashboard-reminder')
 
       reminder.addEventListener('show-item-content', ({ detail: item }) => console.debug('show content for item:', item))
