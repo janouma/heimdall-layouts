@@ -9,17 +9,30 @@ if (!args.name?.trim()) {
   throw new Error('"component" argument is missing')
 }
 
-if (!args.name.match(/^[\w_]+\/[\w_]+$/)) {
+if (!args.name.match(/^[\w_]+(\/[\w_]+)?$/)) {
   throw new Error(`"component" path is not valid (expected layout/component, actual ${args.name})`)
 }
 
-const [layout, componentName] = args.name.split('/')
-const component = `hdl_${layout}_${componentName}`
-const layoutSource = join('src', layout)
-const source = join(layoutSource, 'components', component)
+const targetType = args.name.includes('/') ? 'component' : 'layout'
+
+let layoutSource
+let source
+let targetName
+
+if (targetType === 'component') {
+  const [layout, componentName] = args.name.split('/')
+  const component = componentName && `hdl_${layout}_${componentName}`
+  layoutSource = join('src', layout)
+  source = join(layoutSource, 'components', component)
+  targetName = `${layout}/${componentName}`
+} else {
+  targetName = args.name
+  layoutSource = join('src', targetName)
+  source = layoutSource
+}
 
 if (!existsSync(source)) {
-  throw new Error(`"${source}" component doesn't exist`)
+  throw new Error(`"${source}" ${targetType} doesn't exist`)
 }
 
 const remainingArgs = Object.entries(args)
@@ -27,7 +40,7 @@ const remainingArgs = Object.entries(args)
   .reduce((commanLineArgs, [name, value]) => `${commanLineArgs} ${name}=${value}`, '')
   .trim()
 
-const watchCommand = `nodemon -e js,svelte,png,svg,jpg,json,css --delay 0.5 --watch ${layoutSource} --exec "npm run build:component -- name=${layout}/${componentName} ${remainingArgs}"`
+const watchCommand = `nodemon -e js,svelte,esm,png,svg,jpg,json,css --delay 0.5 --watch ${layoutSource} --exec "npm run build:${targetType} -- name=${targetName} useDevPort ${remainingArgs}"`
 
 console.debug('watch command:', watchCommand)
 

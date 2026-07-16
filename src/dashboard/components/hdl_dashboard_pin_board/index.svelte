@@ -10,6 +10,7 @@
   import { tick } from 'svelte'
   import { createValidator } from 'lib/validation.js'
   import { dispatchContentDisplayEvent } from 'lib/item.js'
+  import { setConfig } from 'lib/config.js'
   import '../hdl_dashboard_widget/index.svelte'
   import '../hdl_dashboard_add_widget/index.svelte'
 
@@ -153,13 +154,8 @@
     log.debug('unpining search', id)
 
     if (pined) {
-      return fetch('/api/set-config/dashboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-
-        body: JSON.stringify({
-          pined: pined.filter(pinedSearch => pinedSearch.id !== id)
-        })
+      return setConfig('dashboard', {
+        pined: pined.filter(pinedSearch => pinedSearch.id !== id)
       })
     }
   }

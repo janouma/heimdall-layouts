@@ -3,7 +3,7 @@
 <script context="module">
   import logger from '@byfrost/utils/logger.js'
 
-  const log = logger.getLogger('layout/dsahboard/component/search_builder')
+  const log = logger.getLogger('layout/dashboard/component/search_builder')
   const validSearchName = /^.*\S.{3,}\S.*$/
 </script>
 
@@ -560,7 +560,7 @@
     </div>
   </div>
 
-  <search-bar activableelement={host} {searching} itemscount={items?.length || 0}
+  <search-bar {searching} itemscount={items?.length || 0}
     {tags} {tagaliases} {user} {connections} messages={messages?.searchBar}
     on:search-update={updateSearch} search={newSearch}></search-bar>
 </header>

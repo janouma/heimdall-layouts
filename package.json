@@ -11,7 +11,7 @@
     "startd": "npm start &> server.log &",
     "startd:test": "npm run start:test &> server_test.log &",
     "lint": "eslint --no-error-on-unmatched-pattern",
-    "standalone-lint": "npm run lint -- '{tests/**/*,lib/**/*,scripts/**/*,src/**/*,index,playwright.config}.{js,cjs,mjs,svelte}'",
+    "standalone-lint": "npm run lint -- '{tests/**/*,lib/**/*,scripts/**/*,src/**/*,index,playwright.config}.{js,cjs,mjs,svelte,esm}'",
     "test": "npm run test:node && npm run setup:test:ui && (PLAYWRIGHT_RETRY=4 npm run test:ui || npm run test:ui:retry -- maxAttempts=4) && npm run teardown:test:ui",
     "test:node": "NODE_ENV=test node bin/test.js",
     "setup:test:ui": "NODE_ENV=test npm run build:shared && NODE_ENV=test npm run build:all-components",
@@ -24,7 +24,7 @@
     "build:shared": "node scripts/build_shared",
     "create:component": "node scripts/create_component",
     "build:component": "node scripts/build_component",
-    "watch:component": "node scripts/watch_component",
+    "watch": "NODE_ENV=development node scripts/watch",
     "create:component-test": "node scripts/create_component_test",
     "update-production-build": "node scripts/update_production_build",
     "dev": "NODE_ENV=development BROWSERSLIST_IGNORE_OLD_DATA=1 npm run"
@@ -40,7 +40,8 @@
     "@babel/core": "^7.12.7",
     "@babel/eslint-parser": "^7.12.17",
     "@babel/preset-env": "^7.28.0",
-    "@byfrost/core": "^0.5.1",
+    "@byfrost/core": "^0.5.2",
+    "@byfrost/ecmascript": "^0.5.0",
     "@byfrost/svelte": "^0.5.1",
     "@byfrost/vue": "^0.5.1",
     "@japa/expect": "^2.0.2",
@@ -70,13 +71,15 @@
     "testdouble": "^3.18.0"
   },
   "dependencies": {
-    "@byfrost/utils": "^1.0.2",
-    "@heimdall/shared-lib": "^1.4.9",
+    "@byfrost/utils": "^1.0.3",
+    "@heimdall/shared-lib": "^1.4.10",
     "basscss": "^8.0.3",
     "basscss-btn": "^1.1.1",
+    "dayjs": "^1.11.20",
     "element-adapter": "^2.0.1",
     "fuse.js": "^6.0.0",
     "joi": "^17.7.0",
+    "juris": "^0.9.0",
     "svelte": "^4.2.18",
     "vue": "^3.4.38"
   }

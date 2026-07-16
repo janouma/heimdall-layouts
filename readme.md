@@ -106,8 +106,10 @@ npm run startd
 Then start the watch process
 
 ```bash
-npm run watch:component -- name=<layout name>/<component name>
+npm run watch -- name=<layout name>[/<component name>]
 ```
+
+When the component name is omited, the whole layout gets rebuild on sources change.
 
 ### The `layoutContext` api
 

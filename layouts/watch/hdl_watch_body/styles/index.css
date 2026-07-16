@@ -1,0 +1,427 @@
+html,
+:host {
+  --anim-duration: 0.25s;
+}
+
+:where(.animated) {
+  transition-duration: var(--anim-duration);
+  transition-timing-function: ease-in-out;
+  transition-property: color, background-color, opacity, visibility, height, width, transform, 
+    transform-origin, filter, left, top, right, no-prop;
+}
+
+@media (hover: hover) {
+  .hover-fx:not([disabled]):hover {
+    opacity: 0.75;
+  }
+}
+
+@keyframes darken {
+  to {
+    filter: brightness(0) blur(var(--dynamic-blur));
+    filter: brightness(var(--scroll-ratio, 0)) blur(var(--dynamic-blur));
+  }
+}
+
+@keyframes raise {
+  to {
+    --movie-grid-shadow-length: 5em;
+    --movie-grid-shadow-color: var(--dynamic-grid-shadow-color);
+  }
+}
+
+:host {
+  --dynamic-blur: calc((1 - var(--scroll-ratio, 1)) * 0.4em);
+
+  --grid-shadow-color: color-mix(
+    in srgb,
+    rgba(0, 0, 0, 80%),
+    rgba(var(--deepspace), 80%)
+  );
+
+  --dyn-grid-shadow-opacity: calc((1 - var(--scroll-ratio, 1)) * 0.8);
+
+  --dynamic-grid-shadow-color: color-mix(
+    in srgb,
+    rgba(0, 0, 0, var(--dyn-grid-shadow-opacity)),
+    rgba(var(--deepspace), var(--dyn-grid-shadow-opacity))
+  );
+
+  --main-header-height: 3.93em;
+  --size-menu-width: 0;
+  --poster-aspect-ratio: 2 / 3;
+  --animation-easing: cubic-bezier(0, 1, 0.3, 1);
+
+  --hero-min-top-margin: 1.413em;
+
+  --hero-top-margin: calc(
+    var(--hero-min-top-margin) + var(--main-header-height)
+  );
+
+  --hero-poster-shadow-length: 2.5em;
+
+  --hero-poster-shadow-expanded-length: calc(
+    var(--hero-poster-shadow-length) * 1.25
+  );
+
+  --hero-adjusted-top-margin: calc(
+    var(--hero-top-margin) - var(--hero-poster-shadow-expanded-length)
+  );
+
+  --hero-bottom-margin: calc(
+    3.756em - var(--hero-poster-shadow-expanded-length)
+  );
+
+  --hero-poster-height: calc(
+    1em * var(--median-poster-width) * (1 / (var(--poster-aspect-ratio)))
+  );
+
+  --hero-carousel-height: calc(
+    var(--hero-poster-height) + 2 * var(--hero-poster-shadow-expanded-length)
+  );
+}
+
+@media (min-width: 1025px) {
+
+:host {
+    --hero-top-margin: var(--hero-min-top-margin);
+    --size-menu-width: 4.78em;
+}
+  }
+
+@media (min-width: 813px) {
+
+:host {
+    --animation-easing: cubic-bezier(0, 0.35, 0.35, 0.9);
+}
+  }
+
+:host {
+
+  position: relative;
+  padding: var(--main-header-height) 0 1em var(--size-menu-width);
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  background-image: radial-gradient(
+    circle at top,
+    hsla(0, 0%, 0%, 0.975) 0%,
+    hsla(0, 0%, 0%, 0.965) 10%,
+    hsla(0, 0%, 0%, 0.94) 20%,
+    hsla(0, 0%, 0%, 0.89) 30%,
+    hsla(0, 0%, 0%, 0.82) 40%,
+    hsla(0, 0%, 0%, 0.72) 50%,
+    hsla(0, 0%, 0%, 0.59) 62.5%,
+    hsla(0, 0%, 0%, 0.44) 75%,
+    hsla(0, 0%, 0%, 0.3) 87.5%,
+    hsla(0, 0%, 0%, 0.18) 100%,
+    hsla(0, 0%, 0%, 0.08) 112.5%,
+    hsla(0, 0%, 0%, 0) 125%
+  );
+}
+
+.poster-visual {
+  display: flex;
+  width: 100%;
+  height: 100%;
+
+  img& {
+    -o-object-fit: cover;
+       object-fit: cover;
+  }
+}
+
+/* ===================================================================
+   Hero Carousel
+   =================================================================== */
+
+.hero-carousel {
+  --gap: 0.35em;
+
+  position: sticky;
+  top: var(--hero-adjusted-top-margin);
+  margin-top: var(--hero-adjusted-top-margin);
+  margin-bottom: var(--hero-bottom-margin);
+  isolation: isolate;
+
+  /* firefox hack to ensure filter reset on .searching class toggle */
+  filter: brightness(100%) blur(0);
+  height: var(--hero-carousel-height);
+
+  -webkit-mask-image: linear-gradient(
+    to right,
+    hsla(0, 0%, 0%, 0) 0%,
+    hsla(0, 0%, 0%, 0.04) 4%,
+    hsla(0, 0%, 0%, 0.16) 8%,
+    hsla(0, 0%, 0%, 0.38) 13%,
+    hsla(0, 0%, 0%, 0.64) 18%,
+    hsla(0, 0%, 0%, 0.88) 23%,
+    hsla(0, 0%, 0%, 1) 30%,
+    hsla(0, 0%, 0%, 1) 70%,
+    hsla(0, 0%, 0%, 0.88) 77%,
+    hsla(0, 0%, 0%, 0.64) 82%,
+    hsla(0, 0%, 0%, 0.38) 87%,
+    hsla(0, 0%, 0%, 0.16) 92%,
+    hsla(0, 0%, 0%, 0.04) 96%,
+    hsla(0, 0%, 0%, 0) 100%
+  );
+
+          mask-image: linear-gradient(
+    to right,
+    hsla(0, 0%, 0%, 0) 0%,
+    hsla(0, 0%, 0%, 0.04) 4%,
+    hsla(0, 0%, 0%, 0.16) 8%,
+    hsla(0, 0%, 0%, 0.38) 13%,
+    hsla(0, 0%, 0%, 0.64) 18%,
+    hsla(0, 0%, 0%, 0.88) 23%,
+    hsla(0, 0%, 0%, 1) 30%,
+    hsla(0, 0%, 0%, 1) 70%,
+    hsla(0, 0%, 0%, 0.88) 77%,
+    hsla(0, 0%, 0%, 0.64) 82%,
+    hsla(0, 0%, 0%, 0.38) 87%,
+    hsla(0, 0%, 0%, 0.16) 92%,
+    hsla(0, 0%, 0%, 0.04) 96%,
+    hsla(0, 0%, 0%, 0) 100%
+  );
+
+  overflow: hidden
+}
+
+@supports (animation-timeline: scroll()) {
+
+.hero-carousel {
+    animation: darken var(--animation-easing) both;
+    animation-timeline: scroll()
+}
+  }
+
+.hero-carousel.searching {
+    filter: brightness(50%) blur(0.4em);
+    animation: revert;
+    animation-timeline: revert;
+  }
+
+.hero-carousel {
+
+  .back,
+  .forward {
+    --margin: 12.5%;
+
+    position: absolute;
+    color: rgb(var(--eggshell));
+    top: 0;
+    right: auto;
+    bottom: 0;
+    left: auto;
+    align-self: center;
+    -webkit-appearance: none;
+       -moz-appearance: none;
+            appearance: none;
+    border: none;
+    width: 2.2em;
+    height: 1.4em;
+    visibility: hidden;
+    opacity: 0;
+
+    background: transparent url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_body/assets/images/chevron.svg) center/contain
+      no-repeat
+  }
+
+    .back::after, .forward::after {
+      content: "";
+      position: absolute;
+      top: -1em;
+      right: -1em;
+      bottom: -1em;
+      left: -1em;
+      border-radius: 3em;
+    }
+
+    @media (hover: none) {
+
+  .back,
+  .forward {
+      display: none
+  }
+    }
+}
+
+.hero-carousel:is(:hover, .manual-switch) :where(.back, .forward) {
+    visibility: visible;
+    opacity: 1;
+  }
+
+.hero-carousel {
+
+  .back {
+    left: var(--margin);
+    rotate: 90deg;
+  }
+
+  .forward {
+    right: var(--margin);
+    rotate: -90deg;
+  }
+}
+
+.hero-poster {
+  background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_body/assets/images/blackhole.webp) no-repeat center / cover;
+}
+
+.hero-poster {
+  --animated-properties: translate, scale;
+  transition-property: color, background-color, opacity, visibility, height, width, transform, 
+    transform-origin, filter, left, top, right, var(--animated-properties);
+
+  position: absolute;
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  width: calc(1em * var(--std-poster-width));
+  aspect-ratio: var(--poster-aspect-ratio);
+  border-radius: 0.35em;
+  overflow: hidden
+}
+
+@media (hover: hover) {
+    .hero-poster.detailable {
+      cursor: pointer;
+
+      > img {
+        transition-property: color, background-color, opacity, visibility, height, width, transform, 
+    transform-origin, filter, left, top, right, scale;
+      }
+    }
+
+      .hero-poster.detailable:hover > img {
+        scale: 1.125;
+      }
+  }
+
+/* ===================================================================
+   MOVIE GRID
+   =================================================================== */
+
+hdl-watch-movie-grid.searching,
+.manual-add {
+  translate: 0
+    calc(
+      -1 *
+        (
+          var(--hero-poster-height) + var(--hero-bottom-margin) +
+            var(--hero-poster-shadow-expanded-length)
+        )
+    );
+}
+
+hdl-watch-movie-grid {
+  --movie-grid-shadow-length: 0;
+  --movie-grid-shadow-color: transparent;
+
+  transition-property: box-shadow, translate
+}
+
+@supports (animation-timeline: scroll()) {
+
+hdl-watch-movie-grid {
+    animation: raise var(--animation-easing) both;
+    animation-timeline: scroll()
+}
+  }
+
+hdl-watch-movie-grid.searching {
+    --movie-grid-shadow-length: 5em;
+    --movie-grid-shadow-color: var(--grid-shadow-color);
+    animation-timeline: revert;
+  }
+
+.manual-add {
+  position: absolute;
+  top: auto;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  justify-self: center;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: inherit;
+  letter-spacing: 0.05em;
+  text-wrap: nowrap;
+  text-transform: capitalize;
+  cursor: pointer;
+  background-color: transparent;
+  visibility: hidden;
+  opacity: 0
+}
+
+.manual-add.visible {
+    visibility: visible;
+    opacity: 100%;
+  }
+
+.manual-add {
+
+  > span {
+    border-radius: 0.24em;
+    background-color: var(--transluent);
+    display: inline-block;
+    padding: 0.5em 0.8em
+  }
+      @media (hover: none) and (orientation: portrait) {
+
+  > span {
+        font-size: 2em
+  }
+      }
+
+      @media (hover: none) and (orientation: landscape) {
+
+  > span {
+        font-size: 1.5em
+  }
+      }
+}
+
+scroll-sentinel-container {
+  position: relative;
+  display: block;
+  height: 0;
+}
+
+scroll-sentinel {
+  position: absolute;
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 100px;
+}
+
+footer {
+  --font-size: 0.72em;
+
+  position: fixed;
+  font-weight: bold;
+  font-size: var(--font-size);
+  top: auto;
+  right: auto;
+  bottom: 2.25em;
+  left: 50%;
+  padding: 0.4em 0.75em;
+  translate: -50% 0;
+  background-color: rgba(var(--deepspace), 62.5%);
+  border-radius: 100px;
+  text-wrap: nowrap;
+
+  > img {
+    height: var(--font-size);
+  }
+}

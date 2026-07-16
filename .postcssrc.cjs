@@ -19,7 +19,7 @@ module.exports = {
       importFrom: [{
         environmentVariables: {
           '--nano-screen': '350px',
-          // '--mini-screen': '812px',
+          '--mini-screen': '812px',
           '--small-screen': '1024px'
         }
       }]

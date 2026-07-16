@@ -1,11 +1,6 @@
 import shell from 'shelljs'
 import createSimpleGit from 'simple-git'
-
-import {
-  join,
-  resolve as resolvePath,
-  sep as slash
-} from 'path'
+import { resolve as resolvePath, sep as slash } from 'path'
 
 build()
 
@@ -37,18 +32,17 @@ async function build () {
     ]))
       .map(file => resolvePath(file))
 
-    const destinationDir = resolvePath('layouts')
+    const builtDirs = ['layouts', '.lib', 'packages', 'shared_components']
+      .map(dir => resolvePath(dir))
 
-    for (const layout of layouts) {
-      for (const file of newFiles) {
-        if (file.startsWith(join(destinationDir, layout) + slash)) {
-          process.stdout.write(`staging file "${file}"\n`)
-          await git.add(file)
-        }
+    for (const file of newFiles) {
+      if (builtDirs.some(dir => file.startsWith(dir + slash))) {
+        process.stdout.write(`staging file "${file}"\n`)
+        await git.add(file)
       }
     }
 
-    const layoutsDescriptor = join(destinationDir, 'layouts.json')
+    const layoutsDescriptor = resolvePath('layouts.json')
 
     if (newFiles.includes(layoutsDescriptor)) {
       process.stdout.write(`staging file "${layoutsDescriptor}"\n`)

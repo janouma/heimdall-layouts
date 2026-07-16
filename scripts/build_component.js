@@ -1,7 +1,8 @@
 import shell from 'shelljs'
 import { join } from 'path'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { argsArrayToArgsObject } from '@byfrost/utils/args.js'
+import { render } from '@byfrost/utils/string.js'
 import env from '../env.js'
 
 const { enableSourceMap, origin, logLevel = 'info' } = env
@@ -35,6 +36,19 @@ const compileResult = shell.exec(
 
 if (compileResult.code > 0) {
   throw new Error('failed to compile component ' + args.name)
-} else {
-  console.info('successfully compiled component ' + args.name)
 }
+
+const filesWithParams = shell
+  .exec('grep -Rl "#{.*}" layouts', { silent: true })
+  .stdout
+  .trim()
+  .split('\n')
+  .filter(Boolean)
+
+for (const file of filesWithParams) {
+  const content = String(readFileSync(file))
+  const rendered = render(content, { ...env, $: '#' })
+  writeFileSync(file, rendered)
+}
+
+console.info('successfully compiled component ' + args.name)

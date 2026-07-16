@@ -1,0 +1,284 @@
+import 'joi'
+import addAdaptiveBehaviour from 'element-adapter'
+import '@heimdall/shared-lib/components/word_tag/index.svelte'
+import '@heimdall/shared-lib/components/folder_browser/index.svelte'
+import '@heimdall/shared-lib/components/search_bar/index.svelte'
+import { render as renderString } from '@byfrost/utils/string.js'
+import juris from 'lib/juris/instance.js'
+import messages from '../assets/messages.json' with { type: 'json' }
+import '../../lib/services.js'
+import { searchModes, defaultSearch, itemTypes } from '../../lib/constants.js'
+
+const { joi } = window
+
+juris.services.HdlWatch.setLayoutState({
+  itemType: itemTypes.MOVIE,
+  searchMode: searchModes.FIND,
+  search: defaultSearch
+})
+
+const HdlWatchHeader = juris.createWebComponent(
+  'HdlWatchHeader',
+  {
+    setUp () {
+      const subscriptions = []
+      let adaptiveBehaviourHandler
+      let controls
+      let searchConnectees
+
+      return {
+        hooks: {
+          onConnect ({
+            component: { getState, subscribe },
+            services: { createValidator }
+          }) {
+            const validate = createValidator({
+              name: 'watch/header',
+              subscribe,
+              getState
+            })
+
+            subscriptions.push(validate('layoutContext', joi.object()))
+          },
+
+          onMount ({
+            component: { shadowRoot },
+
+            services: {
+              HdlWatch: {
+                layoutSubscribe,
+                getLayoutState,
+                setLayoutState,
+                getPlaylists
+              }
+            }
+          }) {
+            controls = shadowRoot.querySelector('.controls')
+
+            adaptiveBehaviourHandler = addAdaptiveBehaviour({
+              target: controls,
+              watchedProperties: ['width', 'height']
+            })
+
+            for (const wordTag of shadowRoot.querySelectorAll('word-tag')) {
+              wordTag.readonly = true
+            }
+
+            let folderBrowser
+
+            function setSelectedPlaylist (playlist) {
+              if (!folderBrowser?.isConnected) {
+                folderBrowser = shadowRoot.querySelector('folder-browser')
+              }
+
+              folderBrowser.selected = playlist
+            }
+
+            subscriptions.push(layoutSubscribe('selectedPlaylist', setSelectedPlaylist))
+            setSelectedPlaylist(getLayoutState('selectedPlaylist'))
+
+            function syncSelectedPlaylist () {
+              if (!getPlaylists().includes(getLayoutState('selectedPlaylist'))) {
+                setLayoutState('selectedPlaylist', undefined)
+              }
+            }
+
+            subscriptions.push(layoutSubscribe('itemType', syncSelectedPlaylist))
+            subscriptions.push(layoutSubscribe('config.playlists', syncSelectedPlaylist))
+          },
+
+          onUpdate ({ component: { shadowRoot } }) {
+            const updatedControls = shadowRoot.querySelector('.controls')
+
+            if (updatedControls && controls !== updatedControls) {
+              adaptiveBehaviourHandler?.removeAdaptiveBehaviour()
+
+              adaptiveBehaviourHandler = addAdaptiveBehaviour({
+                target: updatedControls,
+                watchedProperties: ['width', 'height']
+              })
+            } else {
+              adaptiveBehaviourHandler?.applyAdaptiveBehaviour()
+            }
+
+            for (const wordTag of shadowRoot.querySelectorAll('word-tag')) {
+              wordTag.readonly = true
+            }
+          },
+
+          onUnmount () {
+            adaptiveBehaviourHandler?.removeAdaptiveBehaviour()
+
+            if (subscriptions.length > 0) {
+              for (const unsubscribe of subscriptions) {
+                unsubscribe()
+              }
+            }
+          }
+        },
+
+        render (
+          _/* props */,
+          {
+            component: { setState, getState },
+            services: { HdlWatch: { setLayoutState, getLayoutState, getPlaylists }, createMessageGetter }
+          }
+        ) {
+          const getMessage = createMessageGetter(messages.header)
+
+          return [
+            {
+              link: {
+                rel: 'stylesheet',
+                href: import.meta.resolve('./styles/index.css'),
+                onload: () => setState('styleLoaded', true)
+              }
+            },
+            {
+              div: {
+                class: 'placeholder animated',
+
+                style: {
+                  height: 'var(--main-header-height)',
+                  backgroundColor: 'rgba(var(--deepwater), 60%)'
+                }
+              }
+            },
+            {
+              div: {
+                class: 'controls',
+                style: () => ({ visibility: getState('styleLoaded') ? 'visible' : 'hidden' }),
+                children: [
+                  {
+                    'word-tag': {
+                      class: () => 'animated' + (getLayoutState('itemType') === itemTypes.MOVIE ? ' selected' : ''),
+                      title: renderString(getMessage('showItemType'), { itemType: itemTypes.MOVIE }),
+                      label: itemTypes.MOVIE,
+                      notext: true,
+                      'aria-role': 'button',
+                      onselect ({ detail: itemType }) { setLayoutState({ itemType }) }
+                    }
+                  },
+                  {
+                    'word-tag': {
+                      class: () => 'animated' + (getLayoutState('itemType') === itemTypes.TV_SHOW ? ' selected' : ''),
+                      title: renderString(getMessage('showItemType'), { itemType: itemTypes.TV_SHOW }),
+                      label: itemTypes.TV_SHOW,
+                      notext: true,
+                      'aria-role': 'button',
+                      onselect ({ detail: itemType }) { setLayoutState({ itemType }) }
+                    }
+                  },
+                  {
+                    'folder-browser': {
+                      items: () =>
+                        getLayoutState('searchMode') === searchModes.FIND
+                          ? getPlaylists()
+                          : [],
+
+                      title: getMessage('playlists'),
+
+                      onchange ({ detail: playlist }) {
+                        setLayoutState(
+                          'selectedPlaylist',
+
+                          playlist === getLayoutState('selectedPlaylist')
+                            ? undefined
+                            : playlist
+                        )
+                      }
+                    }
+                  },
+                  {
+                    button: {
+                      class () {
+                        const classes = ['plus animated']
+
+                        if (getLayoutState('searchMode') === searchModes.ADD) {
+                          classes.push('selected')
+                        }
+
+                        return classes.join(' ')
+                      },
+
+                      title: () => renderString(
+                        getMessage('addItem'),
+                        { itemType: getLayoutState('itemType') }
+                      ),
+
+                      onclick () {
+                        const search = getLayoutState('search')
+
+                        const searchMode = getLayoutState('searchMode') === searchModes.FIND
+                          ? searchModes.ADD
+                          : searchModes.FIND
+
+                        const connectees = search.connectees.length > 0
+                          ? search.connectees
+                          : (searchConnectees || [])
+
+                        setLayoutState({
+                          searchMode,
+                          search: { ...search, connectees },
+
+                          searching: search.text.trim() !== '' ||
+                            (searchMode === searchModes.FIND && connectees.length > 0)
+                        })
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              'search-bar': {
+                messages: getMessage('searchBar'),
+                itemscount: () => getLayoutState('itemsCount', 0),
+                searching: () => getLayoutState('fetching', false),
+                negatable: () => getLayoutState('searchMode') === searchModes.FIND,
+
+                search () {
+                  const search = getLayoutState('search')
+
+                  return search && {
+                    ...search,
+                    connectees: getLayoutState('searchMode') === searchModes.FIND
+                      ? search.connectees.length > 0 ? search.connectees : (searchConnectees || [])
+                      : []
+                  }
+                },
+
+                style: () => ({ visibility: getState('styleLoaded') ? 'visible' : 'hidden' }),
+
+                user: () => getLayoutState('searchMode') === searchModes.FIND
+                  ? getState('layoutContext.state.session.value.user')
+                  : undefined,
+
+                connections: () => getLayoutState('searchMode') === searchModes.FIND
+                  ? getState('layoutContext.state.connections.value')
+                  : undefined,
+
+                'onsearch-update' ({ detail: search }) {
+                  if (getLayoutState('searchMode') === searchModes.FIND) {
+                    searchConnectees = search.connectees
+                  }
+
+                  setLayoutState({
+                    searching: search.text.trim() !== '' || search.connectees.length > 0,
+                    search
+                  })
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    autoRerender: false,
+    accessors: ['layoutContext']
+  }
+)
+
+export default HdlWatchHeader

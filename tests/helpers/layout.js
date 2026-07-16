@@ -18,18 +18,16 @@ export default async function renderLayout (layout) {
 
   document.querySelector('.hdl-modal > .hdl-close').addEventListener(
     'click',
-    ({ target: { parentNode: modal } }) => {
-      modal.classList.add('not-visible')
-      document.querySelector('main').classList.remove('blur')
-    }
+    () => window.dispatchEvent(new window.CustomEvent('set-modal', { detail: [] }))
   )
 
   window.addEventListener('set-modal', ({ detail: args }) => {
+    const [modalParams] = args
     const modal = document.querySelector('.hdl-modal')
     const main = document.querySelector('main')
 
-    if (args.length > 0) {
-      const [{ component: componentTag, onMount, params }] = args
+    if (modalParams) {
+      const { component: componentTag, onMount, params } = modalParams
       const placeholder = document.querySelector('.hdl-modal > .hdl-content')
 
       const component = document.createElement(componentTag)
@@ -49,7 +47,6 @@ export default async function renderLayout (layout) {
         () => {
           const placeholder = document.createElement('div')
           placeholder.classList.add('hdl-content')
-
           const component = document.querySelector('.hdl-modal > .hdl-content')
           modal.replaceChild(placeholder, component)
         },

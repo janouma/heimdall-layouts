@@ -1,0 +1,1040 @@
+import 'joi'
+import { clone } from '@byfrost/utils/object.js'
+import logger from '@byfrost/utils/logger.js'
+import juris from 'lib/juris/instance.js'
+import { searchModes, itemTypes, DEFAULT_PLAYLIST, WATCHED_WKSP, WATCHING_WKSP } from '../../lib/constants.js'
+import dateUtil from '../../lib/date.js'
+
+const D3_TAG = '3d'
+const DRAFT_TAG = 'draft'
+const defaultTags = [DRAFT_TAG]
+
+const log = logger.getLogger('layout/watch/component/watch_detailed_view')
+const { joi } = window
+
+const DetailedView = juris.createWebComponent(
+  'DetailedView',
+
+  {
+    setUp () {
+      const subscriptions = []
+
+      return {
+        hooks: {
+          onConnect ({
+            component: { getState, setState, subscribe },
+            services: { HdlWatch: { getLayoutState }, createValidator }
+          }) {
+            const validate = createValidator({
+              name: 'watch/detailed_view',
+              subscribe,
+              getState
+            })
+
+            const item = getState('item')
+
+            subscriptions.push(
+              validate('messages', joi.object()),
+
+              validate(
+                'item',
+
+                joi.object({
+                  $id: joi.string(),
+                  title: joi.string().required(),
+                  url: joi.string().required(),
+                  snapshot: joi.string(),
+
+                  meta: joi.object({
+                    externalId: joi.alternatives(joi.string(), joi.number()),
+                    originalTitle: joi.string(),
+                    overview: joi.string(),
+                    score: joi.number(),
+                    date: joi.string(),
+                    duration: joi.number(),
+                    genres: joi.array().items(joi.string()),
+                    directors: joi.array().items(joi.string()),
+
+                    cast: joi.array().items(joi.object({
+                      name: joi.string().required(),
+                      character: joi.string(),
+                      picture: joi.string()
+                    })),
+
+                    seasonsCount: joi.number(),
+                    ended: joi.boolean(),
+                    statusUnknown: joi.boolean()
+                  }).allow(null).unknown()
+                }).optional().allow(null).unknown()
+              )
+            )
+
+            const setContent = itemProp => setState(
+              'content',
+              itemProp
+                ? createContent(itemProp)
+                : { title: getLayoutState('search.text'), tags: defaultTags }
+            )
+
+            subscriptions.push(subscribe('item', setContent))
+            setContent(item)
+
+            const searchMode = getLayoutState('searchMode')
+
+            setState(
+              'fetching',
+              (searchMode === searchModes.FIND && item?.$id) ||
+                (searchMode === searchModes.ADD && item?.meta?.externalId)
+            )
+          },
+
+          onMount ({
+            component: { getState, setState },
+            services: { HdlWatch: { getLayoutState } },
+            ItemsManager
+          }) {
+            const { $id, meta } = getState('content', {})
+            const { externalId } = meta || {}
+
+            log.debug({ $id, meta, externalId })
+
+            if (getState('fetching')) {
+              let id
+              let data
+
+              if (getLayoutState('searchMode') === searchModes.FIND) {
+                id = $id
+
+                data = ItemsManager.lookup(id)
+                  .then(([updates]) => setState('content', clone(updates)))
+              } else {
+                id = externalId
+
+                data = ItemsManager.externalLookup(id)
+                  .then(updates => setState('content', createContent(updates)))
+              }
+
+              data
+                .catch(error => log.error(`Unable to load item ${id} due to error:\n`, error))
+                .finally(() => setState('fetching', false))
+            }
+
+            if ($id) {
+              const itemType = getLayoutState('itemType')
+
+              const playlistByItemId =
+                Object.entries(getLayoutState('config.playlists', {}))
+                  .reduce(
+                    (map, [playlist, categories]) => {
+                      const categoryItemIds = categories?.[itemType]
+
+                      return categoryItemIds?.length > 0
+                        ? Object.assign(
+                          map,
+
+                          ...categoryItemIds
+                            ?.map(id => ({ [id]: playlist }))
+                        )
+                        : map
+                    },
+                    {}
+                  )
+
+              const computedPlaylist = playlistByItemId[$id] || ''
+
+              setState({
+                playlist: computedPlaylist,
+                initialPlaylist: computedPlaylist
+              })
+            }
+          },
+
+          onUnmount () {
+            if (subscriptions.length > 0) {
+              for (const unsubscribe of subscriptions) {
+                unsubscribe()
+              }
+            }
+          }
+        },
+
+        render (_/* props */, {
+          component: { setState, getState, element: host, emit },
+          services: { HdlWatch: { getLayoutState, getPlaylists }, createMessageGetter },
+          ItemsManager
+        }) {
+          const getMessage = createMessageGetter(getState)
+          const score = getState('content.meta.score')
+          const scoreDisplay = score?.toFixed(1) ?? ' - '
+
+          const formatDuration = (minutes, defaultValue) => minutes
+            ? dateUtil.duration(minutes, 'minutes')
+              .format(getMessage('durationFormat.' + getLayoutState('itemType')))
+
+            : defaultValue
+
+          const hasTag = targetTag => getTags().includes(targetTag)
+
+          function toggleSeason (season) {
+            const tags = getTags()
+            const { workspaces, freeTags } = getState('content', {})
+            const updates = {}
+
+            if (tags.includes(season)) {
+              updates.tags = tags.filter(tag => tag !== season)
+              updates.freeTags = freeTags?.filter(freeTag => freeTag !== season)
+            } else {
+              const tagsSet = new Set(tags)
+              tagsSet.add(season)
+              updates.tags = [...tagsSet]
+            }
+
+            if (updates.tags.includes(season) &&
+              !workspaces?.includes(WATCHING_WKSP) &&
+              !workspaces?.includes(WATCHED_WKSP)
+            ) {
+              updates.workspaces = workspaces
+                ? [...workspaces, WATCHING_WKSP]
+                : [WATCHING_WKSP]
+            } else {
+              updates.workspaces = workspaces
+            }
+
+            setState({ content: updates })
+            updateItem(season)
+          }
+
+          function toggleTag (targetTag) {
+            const tags = getTags()
+            const freeTags = getState('content.freeTags')
+            const updates = {}
+
+            if (tags.includes(targetTag)) {
+              updates.tags = tags.filter(tag => tag !== targetTag)
+              updates.freeTags = freeTags?.filter(keyword => keyword !== targetTag)
+            } else {
+              const tagsSet = new Set(tags)
+              tagsSet.add(targetTag)
+              updates.tags = [...tagsSet]
+            }
+
+            setState({ content: updates })
+            updateItem(targetTag)
+          }
+
+          function getTags () {
+            const { freeTags = [], tags: initialTags = defaultTags } = getState('content', {})
+            return [...initialTags, ...freeTags]
+          }
+
+          function toggleWorkspaces (targetWorkspace, oppositeWorkspace) {
+            const workspaces = getState('content.workspaces', [])
+            let updatedWorkspaces
+
+            if (workspaces.includes(targetWorkspace)) {
+              updatedWorkspaces = workspaces.filter(workspace => workspace !== targetWorkspace)
+            } else {
+              const oppositeFreeWorkspaces = workspaces.filter(workspace => workspace !== oppositeWorkspace)
+              const workspacesSet = new Set(oppositeFreeWorkspaces)
+              workspacesSet.add(targetWorkspace)
+              updatedWorkspaces = [...workspacesSet]
+            }
+
+            setState({ content: { workspaces: updatedWorkspaces } })
+            updateItem(targetWorkspace)
+          }
+
+          async function updateItem (tag) {
+            const content = getState('content')
+
+            if (content.$id) {
+              dispatchEvent('lock')
+
+              try {
+                setState({
+                  updating: { pending: false, failure: false, success: false },
+                  tagging: { pending: true, failure: false, tag }
+                })
+
+                await ItemsManager.save(content)
+
+                const playlist = getState('playlist')
+
+                if (playlist === DEFAULT_PLAYLIST) {
+                  if (content.workspaces?.includes(WATCHED_WKSP)) {
+                    await ItemsManager.setPlaylist(content.$id, undefined)
+                  } else {
+                    if (content.workspaces?.includes(WATCHING_WKSP)) {
+                      await ItemsManager.setPlaylist(content.$id, playlist)
+                    }
+                  }
+                }
+
+                setState('tagging.pending', false)
+              } catch (error) {
+                setState({ tagging: { pending: false, failure: true } })
+
+                log.error(
+                  'could not save item',
+                  `"${content.title}"`,
+                  `(${content.$id})`,
+                  'due to error:\n',
+                  error
+                )
+
+                setState('content', createContent(getState('item')))
+              }
+
+              dispatchEvent('unlock')
+            }
+          }
+
+          function dispatchEvent (eventType) {
+            host.dispatchEvent(new window.CustomEvent(eventType, { bubbles: false }))
+          }
+
+          const canEdit = () => !getState('fetching') &&
+            !getState('adding.pending') &&
+            !getState('updating.pending') &&
+            !getState('tagging.pending')
+
+          function addTagUpdateStatus (classes, tag) {
+            if (getState('tagging.tag') === tag) {
+              if (getState('tagging.pending')) {
+                classes.push('pending')
+              }
+
+              if (getState('tagging.failure')) {
+                classes.push('failure')
+              }
+            }
+          }
+
+          function setPlaylist (playlist) {
+            setState({ playlist, updating: { success: false } })
+          }
+
+          const tagStatusElement = {
+            span: {
+              class: 'status animated',
+              textContent: '!',
+              title: getMessage('updateFailed')
+            }
+          }
+
+          return [
+            {
+              link: {
+                rel: 'stylesheet',
+                href: import.meta.resolve('./styles/index.css'),
+                onload: () => setState('styleLoaded', true)
+              }
+            },
+
+            {
+              section: {
+                class: 'movie-details-card',
+                style: { visibility: () => getState('styleLoaded') ? 'visible' : 'hidden' },
+
+                children: [
+                  {
+                    div: {
+                      class: 'movie-header',
+                      children: [
+                        ...(getState('item')
+                          ? [{
+                              a: {
+                                class: 'poster',
+                                ...(getState('content.url') && { href: getState('content.url') }),
+                                target: '_blank',
+
+                                children: getState('content.snapshot') && {
+                                  img: { class: 'poster-visual', src: getState('content.snapshot'), loading: 'lazy' }
+                                }
+                              }
+                            }]
+                          : []),
+
+                        {
+                          div: {
+                            class: 'infos',
+                            children: [
+                              {
+                                header: {
+                                  children: getState('item')
+                                    ? [
+                                        {
+                                          h1: {
+                                            class: 'movie-title',
+                                            textContent: getState('content.title')
+                                          }
+                                        },
+                                        {
+                                          div: {
+                                            class: 'movie-meta',
+
+                                            children: [
+                                              {
+                                                span: {
+                                                  textContent: getState('content.meta.date')
+                                                    ? dateUtil(getState('content.meta.date')).format('DD/MM')
+                                                    : getMessage('noReleaseDate')
+                                                }
+                                              },
+
+                                              {
+                                                span: {
+                                                  class: () => getState('fetching')
+                                                    ? 'fetching'
+                                                    : undefined,
+
+                                                  textContent: () => getState(
+                                                    'content.meta.genres',
+
+                                                    [
+                                                      getState('fetching')
+                                                        ? createPlaceholder(20)
+                                                        : getMessage('noClassification')
+                                                    ]
+
+                                                  ).join(', ')
+                                                }
+                                              },
+                                              {
+                                                span: {
+                                                  class: () => getState('fetching')
+                                                    ? 'duration fetching'
+                                                    : 'duration',
+
+                                                  textContent: () => formatDuration(
+                                                    getState('content.meta.duration'),
+
+                                                    getState('fetching')
+                                                      ? createPlaceholder(6)
+                                                      : capitalize(getMessage('noDuration'))
+                                                  )
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    : {
+                                        input: {
+                                          class: 'movie-title no-focus',
+                                          type: 'text',
+                                          autocorrect: 'off',
+                                          autocomplete: 'off',
+                                          spellcheck: false,
+                                          placeholder: getMessage('title'),
+                                          value: getState('content.title'),
+                                          disabled: () => !canEdit(),
+
+                                          oninput ({ target: { value } }) {
+                                            setState('content.title', value.trim() || undefined)
+                                          }
+                                        }
+                                      }
+                                }
+                              },
+
+                              ...(getState('item')
+                                ? [
+                                    {
+                                      div: {
+                                        class: 'detail-row',
+                                        children: [
+                                          {
+                                            div: {
+                                              class: 'info-column',
+                                              children: [
+                                                {
+                                                  span: {
+                                                    class: 'score-badge',
+                                                    textContent: scoreDisplay,
+
+                                                    style: {
+                                                      backgroundColor: `
+                                                        color-mix(
+                                                          in srgb,
+                                                          rgb(var(--deepsky)),
+                                                          rgb(var(--grass)) ${(score ?? 5) * 10}%
+                                                        )
+                                                      `
+                                                    }
+                                                  }
+                                                },
+                                                { span: { class: 'label', textContent: getMessage('score') } }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            div: {
+                                              class: 'info-column',
+                                              children: [
+                                                {
+                                                  span: {
+                                                    class: () => getState('fetching')
+                                                      ? 'fetching detail-value'
+                                                      : 'detail-value',
+
+                                                    textContent: () => getState(
+                                                      'content.meta.directors',
+
+                                                      [
+                                                        getState('fetching')
+                                                          ? createPlaceholder(9)
+                                                          : getMessage('unknown')
+                                                      ]
+                                                    ).join(', ')
+                                                  }
+                                                },
+                                                {
+                                                  span: {
+                                                    class: 'label',
+
+                                                    textContent: getMessage(
+                                                      getLayoutState('itemType') === itemTypes.MOVIE
+                                                        ? 'director'
+                                                        : 'creator'
+                                                    )
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            div: {
+                                              class: 'info-column',
+                                              children: [
+                                                {
+                                                  span: {
+                                                    class: 'detail-value',
+
+                                                    textContent: getState('content.meta.date')
+                                                      ? dateUtil(getState('content.meta.date')).format('YYYY')
+                                                      : getMessage('unknown')
+                                                  }
+                                                },
+                                                { span: { class: 'label', textContent: getMessage('year') } }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+
+                                    {
+                                      div: {
+                                        class: 'info-column',
+
+                                        children: [
+                                          {
+                                            p: {
+                                              class: 'synopsis',
+
+                                              textContent: () =>
+                                                getState(
+                                                  'content.meta.overview',
+                                                  getMessage('unknown')
+                                                )
+                                            }
+                                          },
+
+                                          { span: { class: 'label', textContent: getMessage('synopsis') } }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                : [{
+                                    input: {
+                                      class: 'movie-url no-focus',
+                                      type: 'url',
+                                      autocorrect: 'off',
+                                      autocomplete: 'off',
+                                      spellcheck: false,
+                                      placeholder: getMessage('url'),
+                                      disabled: () => !canEdit(),
+
+                                      oninput ({ target: { value, validity: { valid } } }) {
+                                        setState('content.url', valid ? value.trim() : undefined)
+                                      }
+                                    }
+                                  }]),
+
+                              {
+                                div: {
+                                  class: 'tags',
+                                  children: [
+                                    {
+                                      div: {
+                                        class: 'info-column',
+                                        children: [
+                                          {
+                                            button: {
+                                              class () {
+                                                const classes = ['tag d3']
+                                                if (hasTag(D3_TAG)) { classes.push('active') }
+                                                addTagUpdateStatus(classes, D3_TAG)
+                                                return classes.join(' ')
+                                              },
+
+                                              onclick () { toggleTag(D3_TAG) },
+                                              disabled: () => !canEdit(),
+
+                                              children: [
+                                                {
+                                                  span: { class: 'text', textContent: getMessage('d3') }
+                                                },
+                                                tagStatusElement
+                                              ]
+                                            }
+                                          },
+
+                                          { span: { class: 'label', textContent: getMessage('depth') } }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      div: {
+                                        class: 'info-column',
+                                        children: [
+                                          {
+                                            button: {
+                                              class () {
+                                                const classes = ['tag']
+                                                if (!hasTag(DRAFT_TAG)) { classes.push('active') }
+                                                addTagUpdateStatus(classes, DRAFT_TAG)
+                                                return classes.join(' ')
+                                              },
+
+                                              onclick () { toggleTag(DRAFT_TAG) },
+                                              disabled: () => !canEdit(),
+
+                                              children: [
+                                                {
+                                                  span: { class: 'text', textContent: getMessage('shared') }
+                                                },
+                                                tagStatusElement
+                                              ]
+                                            }
+                                          },
+
+                                          {
+                                            span: { class: 'label', textContent: getMessage('visibility') }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      div: {
+                                        class: 'info-column',
+
+                                        children: [
+                                          {
+                                            div: {
+                                              class: 'follow-up',
+
+                                              children () {
+                                                const tags = getTags()
+                                                const workspaces = getState('content.workspaces', [])
+                                                const { seasonsCount, ended } = getState('content.meta') || {}
+
+                                                const statusUnknown = ended == null
+
+                                                const isBeingWatched = workspaces.includes(WATCHING_WKSP) &&
+                                                  !workspaces.includes(WATCHED_WKSP)
+
+                                                const hasBeenWatched = workspaces.includes(WATCHED_WKSP) &&
+                                                  !workspaces.includes(WATCHING_WKSP)
+
+                                                const followUpTagElts = [{
+                                                  button: {
+                                                    class () {
+                                                      const classes = ['tag']
+                                                      if (isBeingWatched) { classes.push('active') }
+                                                      addTagUpdateStatus(classes, WATCHING_WKSP)
+                                                      return classes.join(' ')
+                                                    },
+
+                                                    onclick () { toggleWorkspaces(WATCHING_WKSP, WATCHED_WKSP) },
+                                                    disabled: () => !canEdit(),
+
+                                                    children: [
+                                                      {
+                                                        span: {
+                                                          class: 'text', textContent: getMessage('watching')
+                                                        }
+                                                      },
+                                                      tagStatusElement
+                                                    ]
+                                                  }
+                                                }]
+
+                                                const itemType = getLayoutState('itemType')
+
+                                                if (itemType === itemTypes.TV_SHOW) {
+                                                  const seasonTags = tags.filter(isSeasonTag)
+                                                    .map(tag => tag.toLowerCase())
+
+                                                  const availableSeasons = seasonsCount > 0
+                                                    ? Array.from({ length: seasonsCount })
+                                                      .map((_, index) => 's' + (index + 1))
+
+                                                    : [...new Set([...seasonTags, `s${seasonTags.length + 1}`])]
+
+                                                  followUpTagElts.push(
+                                                    ...availableSeasons.map(tag => ({
+                                                      button: {
+                                                        class () {
+                                                          const classes = ['tag']
+
+                                                          if (
+                                                            (isBeingWatched || hasBeenWatched) &&
+                                                            seasonTags.includes(tag)
+                                                          ) {
+                                                            classes.push('active')
+                                                          }
+
+                                                          if (!isBeingWatched && !hasBeenWatched) {
+                                                            classes.push('locked')
+                                                          }
+
+                                                          addTagUpdateStatus(classes, tag)
+                                                          return classes.join(' ')
+                                                        },
+
+                                                        onclick () { toggleSeason(tag) },
+
+                                                        disabled: () => !canEdit() ||
+                                                          (!isBeingWatched && !hasBeenWatched),
+
+                                                        children: [
+                                                          {
+                                                            span: { class: 'text', textContent: tag }
+                                                          },
+                                                          tagStatusElement
+                                                        ]
+                                                      }
+                                                    }))
+                                                  )
+                                                }
+
+                                                if (itemType === itemTypes.MOVIE || ended || statusUnknown) {
+                                                  followUpTagElts.push({
+                                                    button: {
+                                                      class () {
+                                                        const classes = ['tag']
+                                                        if (hasBeenWatched) { classes.push('active') }
+                                                        addTagUpdateStatus(classes, WATCHED_WKSP)
+                                                        return classes.join(' ')
+                                                      },
+
+                                                      onclick () { toggleWorkspaces(WATCHED_WKSP, WATCHING_WKSP) },
+                                                      disabled: () => !canEdit(),
+
+                                                      children: [
+                                                        {
+                                                          span: {
+                                                            class: 'text', textContent: getMessage('watched')
+                                                          }
+                                                        },
+                                                        tagStatusElement
+                                                      ]
+                                                    }
+                                                  })
+                                                }
+
+                                                return followUpTagElts
+                                              }
+                                            }
+                                          },
+
+                                          {
+                                            span: { class: 'label', textContent: getMessage('followUp') }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+
+                              {
+                                section: {
+                                  class: 'form',
+                                  children: [
+                                    {
+                                      div: {
+                                        class: 'playlist-field',
+                                        'data-hint': getMessage('playlistHint'),
+
+                                        children: [
+                                          {
+                                            input: {
+                                              class: 'no-focus',
+                                              type: 'text',
+                                              autocorrect: 'off',
+                                              autocomplete: 'off',
+                                              spellcheck: false,
+                                              disabled: () => !canEdit(),
+
+                                              placeholder: () => getState('playlistFocused')
+                                                ? DEFAULT_PLAYLIST
+                                                : getMessage('playlistPlaceholder'),
+
+                                              onfocus () { setState('playlistFocused', true) },
+                                              onblur () { setState('playlistFocused', false) },
+
+                                              oninput ({ target: { value } }) {
+                                                setPlaylist(value.trim() || undefined)
+                                              },
+
+                                              onkeydown ({ key, target: { value } }) {
+                                                if (key === 'Enter' && !value.trim()) {
+                                                  setPlaylist(DEFAULT_PLAYLIST)
+                                                }
+
+                                                if (key === 'Escape' && value.trim()) {
+                                                  setPlaylist('')
+                                                }
+                                              },
+
+                                              onkeyup (event) { event.stopPropagation() },
+                                              value: () => getState('playlist', '')
+                                            }
+                                          },
+
+                                          {
+                                            button: {
+                                              class: 'playlist-clear animated hover-fx',
+                                              children: { span: { textContent: getMessage('clear') } },
+                                              disabled: () => !canEdit() || !getState('playlist'),
+                                              onclick: () => setPlaylist('')
+                                            }
+                                          },
+
+                                          function createPlaylistsCompletionNode () {
+                                            const playlists = getPlaylists()
+
+                                            if (playlists.length > 0) {
+                                              return {
+                                                ul: {
+                                                  class: 'completion animated',
+
+                                                  children: () => playlists.map(playlist => ({
+                                                    li: {
+                                                      class: playlist === DEFAULT_PLAYLIST
+                                                        ? 'default'
+                                                        : undefined,
+
+                                                      onclick: () => setPlaylist(playlist),
+
+                                                      children: {
+                                                        button: {
+                                                          class: 'animated',
+                                                          textContent: playlist
+                                                        }
+                                                      }
+                                                    }
+                                                  }))
+                                                }
+                                              }
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      button: {
+                                        class () {
+                                          const action = getState('content.$id') ? 'updating' : 'adding'
+                                          const classes = ['save-button animated hover-fx']
+
+                                          if (getState(action + '.pending')) {
+                                            classes.push('pending')
+                                          }
+
+                                          if (getState(action + '.success')) {
+                                            classes.push('success')
+                                          }
+
+                                          if (getState(action + '.failure')) {
+                                            classes.push('failure')
+                                          }
+
+                                          return classes.join(' ')
+                                        },
+
+                                        disabled: () => !canEdit() ||
+                                          (
+                                            !getState('item') &&
+                                            (!getState('content.title') || !getState('content.url'))
+                                          ) ||
+                                          (
+                                            getState('item')?.$id &&
+                                              getState('playlist') === getState('initialPlaylist')
+                                          ),
+
+                                        textContent: getMessage(
+                                          getLayoutState('searchMode') === searchModes.FIND
+                                            ? 'setPlaylist'
+
+                                            : getLayoutState('itemType') === itemTypes.MOVIE
+                                              ? 'addMovie'
+                                              : 'addTvShow'
+                                        ),
+
+                                        async onclick () {
+                                          dispatchEvent('lock')
+
+                                          const content = getState('content')
+                                          let contentId = content.$id
+                                          const action = contentId ? 'updating' : 'adding'
+                                          const playlist = getState('playlist')
+
+                                          setState({
+                                            [action]: {
+                                              pending: true,
+                                              failure: false,
+                                              success: false
+                                            }
+                                          })
+
+                                          try {
+                                            if (action === 'adding') {
+                                              ({ $id: contentId } = await ItemsManager.save(content))
+                                            }
+
+                                            if (playlist !== getState('initialPlaylist')) {
+                                              await ItemsManager.setPlaylist(contentId, playlist)
+                                              setState('initialPlaylist', playlist)
+                                            }
+
+                                            setState({ [action]: { pending: action === 'adding', success: true } })
+
+                                            if (action === 'adding') {
+                                              setTimeout(
+                                                () => { emit('add', content, { bubbles: false }) },
+                                                3000
+                                              )
+                                            }
+                                          } catch (error) {
+                                            setState({ [action]: { pending: false, failure: true } })
+
+                                            const id = content.$id || content.meta?.externalId
+                                            const idLog = id ? `(${id})` : ''
+
+                                            log.error(
+                                              'could not save item',
+                                              `"${content.title}"`,
+                                              idLog,
+                                              'due to error:\n',
+                                              error
+                                            )
+                                          }
+
+                                          dispatchEvent('unlock')
+                                        }
+                                      }
+                                    },
+                                    { span: { class: 'label', textContent: getMessage('playlist') } },
+                                    { span: { class: 'label', textContent: getMessage('save') } }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+
+            {
+              section: {
+                class: () => getState('fetching') ? 'fetching cast' : 'cast',
+
+                children: () => getState(
+                  'content.meta.cast',
+
+                  getState('fetching')
+                    ? Array.from({ length: 9 }).map(() => ({
+                      name: createPlaceholder(15),
+                      character: createPlaceholder(10)
+                    }))
+                    : []
+                ).map(({ name, character, picture }) => ({
+                  div: {
+                    class: 'actor',
+                    title: name + (character ? '\n ⤷ ' + character : ''),
+                    children: [
+                      {
+                        div: {
+                          class: 'avatar',
+                          children: picture && { img: { src: picture, loading: 'lazy' } }
+                        }
+                      },
+                      { span: { class: 'name', textContent: name } },
+                      { span: { class: 'character', textContent: character } }
+                    ]
+                  }
+                }))
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+
+  {
+    autoRerender: false,
+    accessors: ['messages', 'item']
+  }
+)
+
+export default DetailedView
+
+const placeholderTypes = ['alpha', 'numeric']
+
+function createContent (item) {
+  const content = clone(item)
+
+  if (content && !content.$id) {
+    content.tags = !content.tags
+      ? defaultTags
+      : [...new Set([...content.tags, ...defaultTags])]
+  }
+
+  return content
+}
+
+function createPlaceholder (length, type = placeholderTypes[0]) {
+  if (!placeholderTypes.includes(type)) {
+    throw new Error(`unsupported type ${type}. Allowed ${placeholderTypes}`)
+  }
+
+  const source = type === 'alpha' ? '▙▚▛▜▟▞ ' : '◼▮■∎❘❙❚▬'
+  let placeholder = ''
+
+  while (placeholder.length < length) {
+    if (!placeholder.trim()) { placeholder = '' }
+    const randomIndex = Math.floor(Math.random() * source.length)
+    placeholder += source[randomIndex]
+  }
+
+  return placeholder.trim()
+}
+
+const seasonTagPattern = /^S\d+$/i
+const isSeasonTag = tag => tag.match(seasonTagPattern)
+
+const capitalize = text => text.split(/\s+/)
+  .map(
+    word =>
+      `${word[0].toUpperCase()}${word.slice(1).toLowerCase()}`
+  )
+  .join(' ')

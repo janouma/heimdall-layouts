@@ -1,0 +1,96 @@
+[
+  {
+    "$id": "dracula",
+    "title": "Dracula",
+    "url": "https://tmdb/dracula",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/dracula.webp",
+    "workspaces": ["watching"]
+  },
+  {
+    "$id": "vanished",
+    "title": "Vanished",
+    "url": "https://tmdb/vanished",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/vanished.webp"
+  },
+  {
+    "$id": "high_to_lowest",
+    "title": "Highest to lowest",
+    "url": "https://tmdb/high_to_lowest",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/high_to_lowest.webp"
+  },
+  {
+    "$id": "ballerina",
+    "title": "Ballerina",
+    "url": "https://tmdb/ballerina",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/ballerina.webp"
+  },
+  {
+    "$id": "jurassic_world_renaissance",
+    "title": "Jurassic world renaissance",
+    "url": "https://tmdb/jurassic_world_renaissance",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/jurassic_world_renaissance.webp",
+    "workspaces": ["watched"]
+  },
+  {
+    "$id": "hilda",
+    "title": "Hilda et le roi de la montagne",
+    "url": "https://tmdb/hilda",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/hilda.webp"
+  },
+  {
+    "$id": "blow_out",
+    "title": "Blow out",
+    "url": "https://tmdb/blow_out",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/blow_out.webp"
+  },
+  {
+    "$id": "top_gun_maverick",
+    "title": "Top gun: Maverick",
+    "url": "https://tmdb/top_gun_maverick",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/top_gun_maverick.webp"
+  },
+  {
+    "$id": "offering_to_the_storm",
+    "title": "Offering to the storm",
+    "url": "https://tmdb/offering_to_the_storm",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/offering_to_the_storm.webp"
+  },
+  {
+    "$id": "luther_fallen_sun",
+    "title": "Luther: fallen sun",
+    "url": "https://tmdb/luther_fallen_sun",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/luther_fallen_sun.webp",
+    "workspaces": ["watched"]
+  },
+  {
+    "$id": "project_hail_mary",
+    "title": "Project hail mary",
+    "url": "https://tmdb/project_hail_mary",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/project_hail_mary.webp"
+  },
+  {
+    "$id": "eyes_wide_shut",
+    "title": "Eyes wide shut",
+    "url": "https://tmdb/eyes_wide_shut",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/eyes_wide_shut.webp"
+  },
+  {
+    "$id": "the_astronaut",
+    "title": "The astronaut",
+    "url": "https://tmdb/the_astronaut",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/the_astronaut.webp"
+  },
+  {
+    "$id": "under_the_skin",
+    "title": "Under the skin",
+    "url": "https://www.themoviedb.org/movie/97370",
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/under_the_skin.webp",
+    "workspaces": ["watching"],
+    "meta": {
+      "externalId": 97370,
+      "overview": "A seductive stranger prowls the streets of Glasgow in search of prey: unsuspecting men who fall under her spell.",
+      "score": 6.1,
+      "date": "2014-03-14"
+    }
+  }
+]

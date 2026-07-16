@@ -1,0 +1,484 @@
+import 'joi'
+import logger from '@byfrost/utils/logger.js'
+import { render as renderString } from '@byfrost/utils/string.js'
+import 'lib/polyfills.js'
+import juris from 'lib/juris/instance.js'
+import { getConfig } from 'lib/config.js'
+import messages from '../assets/messages.json' with { type: 'json' }
+import tmdbLogo from './assets/images/tmdb_logo.svg'
+import { searchModes, DEFAULT_PLAYLIST } from '../../lib/constants.js'
+import { STD_POSTER_WIDTH, MEDIAN_POSTER_WIDTH, CAROUSEL_SIZE } from './hero_carousel.js'
+import '../../lib/services.js'
+import '../../lib/items_manager.js'
+import '../hdl_watch_detailed_view/index.esm'
+import '../hdl_watch_movie_grid/index.esm'
+
+const log = logger.getLogger('layout/watch/component/watch_body')
+const { joi, visualViewport, matchMedia } = window
+const { matches: isTouchDevice } = matchMedia('(hover: none)')
+
+CSS.registerProperty({
+  name: '--movie-grid-shadow-length',
+  syntax: '<length>',
+  initialValue: 0,
+  inherits: true
+})
+
+CSS.registerProperty({
+  name: '--movie-grid-shadow-color',
+  syntax: '<color>',
+  initialValue: 'transparent',
+  inherits: true
+})
+
+const WatchBody = juris.createWebComponent(
+  'WatchBody',
+
+  {
+    setUp () {
+      const subscriptions = []
+
+      return {
+        hooks: {
+          onConnect ({
+            component: { getState, subscribe },
+            services: { createValidator }
+          }) {
+            const validate = createValidator({
+              name: 'watch/body',
+              subscribe,
+              getState
+            })
+
+            subscriptions.push(validate('layoutContext', joi.object()))
+          },
+
+          onMount ({
+            component: { shadowRoot, element, setState, getState },
+            services: { HdlWatch: { layoutSubscribe, setLayoutState, getLayoutState } },
+            ItemsManager,
+            executeBatch
+          }) {
+            loadConfig()
+
+            if (getLayoutState('searchMode') === searchModes.FIND) {
+              ItemsManager.findItems()
+            } else {
+              ItemsManager.seekItems()
+            }
+
+            loadPosterSelection()
+
+            window.addEventListener('resize', setPosterWidths)
+            subscriptions.push(() => window.removeEventListener('resize', setPosterWidths))
+            setPosterWidths()
+
+            subscriptions.push(layoutSubscribe('search', updateSearch))
+            subscriptions.push(layoutSubscribe('searchMode', updateSearch))
+
+            const selectionCarousel = shadowRoot.querySelector('.selection-carousel')
+
+            subscriptions.push(layoutSubscribe('itemType', () => {
+              updateSearch()
+
+              if (selectionCarousel.startViewTransition) {
+                selectionCarousel.startViewTransition(loadPosterSelection)
+              } else {
+                loadPosterSelection()
+              }
+            }))
+
+            const postersGrid = shadowRoot.querySelector('hdl-watch-movie-grid')
+
+            if (isTouchDevice) {
+              const postersGridIntersectionObserver = new IntersectionObserver(
+                ([{ intersectionRect }]) => {
+                  log.debug('onMount/postersGridObserver', { intersectionRect })
+                  setState('postersGridVisible', intersectionRect.height >= 100)
+                }
+              )
+
+              postersGridIntersectionObserver.observe(postersGrid)
+              subscriptions.push(() => postersGridIntersectionObserver.disconnect())
+
+              const posterGridResizeObserver = new ResizeObserver(() => {
+                postersGridIntersectionObserver.unobserve(postersGrid)
+                postersGridIntersectionObserver.observe(postersGrid)
+              })
+
+              posterGridResizeObserver.observe(postersGrid)
+              subscriptions.push(() => posterGridResizeObserver.disconnect())
+            }
+
+            {
+              let isFirstTrigger = true
+
+              const scrollSentinelObserver = new IntersectionObserver(([{ isIntersecting }]) => {
+                if (isFirstTrigger) {
+                  requestAnimationFrame(() => { isFirstTrigger = false })
+                  return
+                }
+
+                const items = getState('grid.items')
+                const { itemsCount = 0, search, fetching } = getLayoutState()
+
+                if (isIntersecting && itemsCount > items?.length && !fetching) {
+                  setLayoutState(
+                    'search.max',
+                    Math.min(itemsCount, (search?.max || 0) + 100)
+                  )
+                }
+              }, { root: element })
+
+              const sentinel = shadowRoot.querySelector('scroll-sentinel')
+              scrollSentinelObserver.observe(sentinel)
+              subscriptions.push(() => scrollSentinelObserver.disconnect())
+            }
+
+            let previousSearchMax
+
+            subscriptions.push(layoutSubscribe('items', setGridItems))
+
+            if (getLayoutState('items')) {
+              setGridItems(getLayoutState('items'))
+            }
+
+            subscriptions.push(layoutSubscribe('selectedPlaylist', updateFindResults))
+
+            const { sseClient } = getState('layoutContext')
+
+            sseClient.subscribe('notification', syncConfig)
+            subscriptions.push(() => sseClient.unsubscribe('notification', syncConfig))
+
+            sseClient.subscribe('notification', syncItems)
+            subscriptions.push(() => sseClient.unsubscribe('notification', syncItems))
+
+            function loadConfig () {
+              return getConfig({ layout: 'watch' })
+                .then(config => {
+                  setLayoutState('config', config || {})
+                  return true
+                })
+                .catch(error => {
+                  log.error('Unable to load config due to error:\n', error)
+                  return false
+                })
+            }
+
+            async function updateSearch () {
+              updateFindResults()
+              updateSeekResults()
+            }
+
+            async function updateFindResults () {
+              if (getLayoutState('searchMode') === searchModes.FIND) {
+                await ItemsManager.findItems()
+                setScrollRatio(element)
+              }
+            }
+
+            function updateSeekResults () {
+              if (getLayoutState('searchMode') === searchModes.ADD) {
+                ItemsManager.seekItems()
+              }
+            }
+
+            function setPosterWidths () {
+              const STD_VIEWPORT_HEIGHT_RATIO = 0.0232
+              const MEDIAN_VIEWPORT_HEIGHT_RATIO = 0.0333
+
+              const standardPosterWidth = Math.min(
+                visualViewport.height * STD_VIEWPORT_HEIGHT_RATIO,
+                STD_POSTER_WIDTH
+              )
+
+              const medianPosterWidth = Math.min(
+                visualViewport.height * MEDIAN_VIEWPORT_HEIGHT_RATIO,
+                MEDIAN_POSTER_WIDTH
+              )
+
+              executeBatch(() => {
+                setState('standardPosterWidth', standardPosterWidth)
+                setState('medianPosterWidth', medianPosterWidth)
+              })
+
+              element.style.setProperty('--std-poster-width', standardPosterWidth)
+              element.style.setProperty('--median-poster-width', medianPosterWidth)
+            }
+
+            async function syncConfig ({ scope, type }) {
+              if (scope === 'watch' && type === 'configUpdate' && await loadConfig()) {
+                const { config: { playlists } = {}, selectedPlaylist } = getLayoutState()
+
+                if (!playlists?.[selectedPlaylist]?.[getLayoutState('itemType')]?.length > 0) {
+                  setLayoutState('selectedPlaylist', undefined)
+                }
+
+                return syncWatchView()
+              }
+            }
+
+            function syncItems ({ type }) {
+              if (type === 'itemsUpdate') { return syncWatchView() }
+            }
+
+            async function syncWatchView () {
+              await updateFindResults()
+
+              if (selectionCarousel.startViewTransition) {
+                selectionCarousel.startViewTransition(loadPosterSelection)
+              } else {
+                loadPosterSelection()
+              }
+            }
+
+            async function loadPosterSelection () {
+              let configPayload = getLayoutState('config')
+
+              if (!configPayload) {
+                configPayload = new Promise(resolve => layoutSubscribe('config', resolve))
+              }
+
+              const config = await configPayload
+              const itemType = getLayoutState('itemType')
+              const playlist = config?.playlists?.[DEFAULT_PLAYLIST]?.[itemType]
+
+              if (playlist?.length > 0) {
+                const items = playlist.length < CAROUSEL_SIZE ? await ItemsManager.getItemsSample() : []
+
+                let postersSelection
+
+                try {
+                  const selectionItemsById = items.reduce(
+                    (map, item) => playlist.includes(item.$id) ? map.set(item.$id, item) : map,
+                    new Map()
+                  )
+
+                  const notLoadedIds = playlist.filter(id => !selectionItemsById.has(id))
+
+                  if (notLoadedIds.length > 0) {
+                    for (const item of await ItemsManager.lookup(...notLoadedIds)) {
+                      if (item) { selectionItemsById.set(item.$id, item) }
+                    }
+                  }
+
+                  postersSelection = playlist.reduce((selection, id) => {
+                    const item = selectionItemsById.get(id)
+
+                    if (item) {
+                      selection.push(item)
+                    } else {
+                      log.error(`Item ${id} not found`)
+                    }
+
+                    return selection
+                  }, [])
+                } catch (error) {
+                  log.error(`Unable to load items ${playlist} due to error:\n`, error)
+                  postersSelection = []
+                }
+
+                if (items.length > 0 && postersSelection.length < CAROUSEL_SIZE) {
+                  postersSelection
+                    .push(...selectRandomItems(items, CAROUSEL_SIZE - postersSelection.length, postersSelection))
+                }
+
+                // FIXME: Possibly requestAnimationFrame wrap needed
+                setState('postersSelection', postersSelection)
+              } else {
+                const items = await ItemsManager.getItemsSample()
+
+                // FIXME: Possibly requestAnimationFrame wrap needed
+                setState('postersSelection', selectRandomItems(items, CAROUSEL_SIZE))
+              }
+            }
+
+            function setGridItems (items) {
+              const searchMax = getLayoutState('search.max')
+              const isLoadingMore = searchMax && searchMax !== previousSearchMax
+
+              // FIXME: remove `&& !isTouchDevice` condition when
+              // HTMLElement.startViewTransition() is available on Safari
+              if (isLoadingMore && element.startViewTransition && !isTouchDevice) {
+                element.startViewTransition(() => setState('grid.items', items))
+              } else {
+                setState('grid.items', items)
+              }
+
+              previousSearchMax = searchMax
+            }
+          },
+
+          onUpdate ({ component: { element } }) { setScrollRatio(element) },
+
+          onUnmount () {
+            if (subscriptions.length > 0) {
+              for (const unsubscribe of subscriptions) {
+                unsubscribe()
+              }
+            }
+          }
+        },
+
+        render (_/* props */, {
+          component: { getState, setState, element },
+          services: { HdlWatch: { setLayoutState, getLayoutState }, createMessageGetter }
+        }) {
+          const getMessage = createMessageGetter(messages.body)
+
+          function onadd () {
+            setLayoutState('searchMode', searchModes.FIND)
+            getState('layoutContext').mutations.setModal(undefined)
+          }
+
+          return [
+            {
+              link: {
+                rel: 'stylesheet',
+                href: import.meta.resolve('./styles/index.css'),
+                onload: () => setState('styleLoaded', true)
+              }
+            },
+
+            // ---- Hero Carousel ----
+            () => ({
+              HdlWatchHeroCarousel: {
+                class: 'selection-carousel',
+                posters: getState('postersSelection'),
+                messages: messages.carousel,
+                styleLoaded: () => getState('styleLoaded'),
+                touchMoveDisabled: () => getState('postersGridVisible'),
+
+                searching: () => getLayoutState('searching') ||
+                  getLayoutState('selectedPlaylist') ||
+                  getLayoutState('searchMode') === searchModes.ADD,
+
+                ondetail (item) {
+                  getState('layoutContext')?.mutations.setModal({
+                    component: 'hdl-watch-detailed-view',
+                    params: { messages: messages.detailedView, item }
+                  })
+                }
+              }
+            }),
+
+            // ---- Movie Grid ----
+            {
+              'hdl-watch-movie-grid': {
+                class () {
+                  const classes = ['animated']
+
+                  if (
+                    getLayoutState('searching') ||
+                    getLayoutState('selectedPlaylist') ||
+                    getLayoutState('searchMode') === searchModes.ADD
+                  ) {
+                    classes.push('searching')
+                  }
+
+                  return classes.join(' ')
+                },
+
+                style: () => ({ visibility: getState('styleLoaded') ? 'visible' : 'hidden' }),
+                messages: messages.movieGrid,
+                parent: element,
+                items: () => getState('grid.items'),
+
+                ondetail ({ detail: item }) {
+                  getState('layoutContext').mutations.setModal({
+                    component: 'hdl-watch-detailed-view',
+                    onMount (detailedView) { detailedView.addEventListener('add', onadd) },
+                    params: { messages: messages.detailedView, item }
+                  })
+                }
+              }
+            },
+
+            () => getLayoutState('searchMode') === searchModes.ADD
+              ? ({
+                  button: {
+                    class () {
+                      const classes = ['manual-add animated hover-fx']
+
+                      if (getLayoutState('searching') && getLayoutState('searchMode') === searchModes.ADD) {
+                        classes.push('visible')
+                      }
+
+                      return classes.join(' ')
+                    },
+
+                    onclick () {
+                      getState('layoutContext').mutations.setModal({
+                        component: 'hdl-watch-detailed-view',
+                        onMount (detailedView) { detailedView.addEventListener('add', onadd) },
+                        params: { messages: messages.detailedView }
+                      })
+                    },
+
+                    children: { span: { textContent: getMessage('manualAdd') } }
+                  }
+                })
+              : undefined,
+
+            {
+              'scroll-sentinel-container': {
+                style: () => ({ visibility: getState('styleLoaded') ? 'visible' : 'hidden' }),
+                inert: true,
+                children: { 'scroll-sentinel': {} }
+              }
+            },
+
+            {
+              footer: {
+                style: () => ({ visibility: getState('styleLoaded') ? 'visible' : 'hidden' }),
+
+                innerHTML: renderString(
+                  getMessage('disclamer'),
+                  { tmdbLogo: `<img src="${tmdbLogo}">` }
+                )
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+
+  {
+    autoRerender: false,
+    accessors: ['layoutContext']
+  }
+)
+
+export default WatchBody
+
+function setScrollRatio (element) {
+  const ratio = element.clientHeight / element.scrollHeight
+  element.style.setProperty('--scroll-ratio', ratio <= 0.5 ? Number.EPSILON : ratio)
+}
+
+function selectRandomItems (sources, size, excluded) {
+  const cappedSize = Math.min(size, sources.length)
+  const maxTrials = 5 * cappedSize
+  const selected = []
+  let trialsCount = 0
+
+  do {
+    let currentIndex
+
+    do {
+      currentIndex = Math.floor(Math.random() * sources.length)
+      trialsCount++
+    } while (
+      trialsCount < maxTrials &&
+      (
+        excluded?.find(({ $id }) => $id === sources[currentIndex].$id) ||
+        selected.find(({ $id }) => $id === sources[currentIndex].$id)
+      )
+    )
+
+    if (trialsCount < maxTrials) { selected.push(sources[currentIndex]) }
+  } while (trialsCount < maxTrials && selected.length < cappedSize)
+
+  return selected
+}

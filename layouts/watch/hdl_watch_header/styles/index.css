@@ -1,0 +1,155 @@
+html,
+:host {
+  --anim-duration: 0.25s;
+}
+
+:where(.animated) {
+  transition-duration: var(--anim-duration);
+  transition-timing-function: ease-in-out;
+  transition-property: color, background-color, opacity, visibility, height, width, transform, 
+    transform-origin, filter, left, top, right, no-prop;
+}
+
+:host {
+  --yes: ;
+  --no: initial;
+  display: contents;
+
+  > * {
+    background-color: rgba(var(--deepwater), 60%);
+    height: var(--main-header-height);
+  }
+}
+
+.placeholder {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  z-index: -1;
+  visibility: hidden;
+  opacity: 0;
+  transition-delay: var(--anim-duration);
+}
+
+.controls {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  grid-column-gap: 1em;
+  -moz-column-gap: 1em;
+       column-gap: 1em;
+  flex: 1 1 auto;
+  isolation: isolate;
+
+  > * {
+    z-index: 1;
+  }
+
+  > :first-child {
+    margin-left: 0.375em;
+  }
+}
+
+.controls::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    -webkit-backdrop-filter: var(--main-header-backdrop-filter);
+            backdrop-filter: var(--main-header-backdrop-filter);
+    width: 100%;
+    width: var(--ea-width, 100%);
+    height: 100%;
+    height: var(--ea-height, 100%);
+  }
+
+@media (min-width: 813px) {
+
+.controls {
+    padding-left: 1.3425em;
+    padding-right: 1.3425em
+}
+  }
+
+@media (min-width: 1025px) {
+
+.controls {
+    flex: revert;
+
+    > :first-child {
+      margin-left: revert;
+    }
+
+    > :last-child {
+      margin-right: 0.5em;
+    }
+}
+  }
+
+word-tag {
+  font-size: 0.9em
+}
+
+word-tag.selected {
+    color: rgb(var(--sky));
+  }
+
+folder-browser {
+  --folder-browser-large-text: var(--yes);
+  --folder-browser-full-width: var(--yes);
+  --folder-browser-y-offset: 0.14em;
+  --folder-browser-max-visible-rows: 7;
+
+  height: 100%;
+  margin-left: 0.4em;
+  margin-right: 0.4em
+}
+
+@media (min-width: 1025px) {
+
+folder-browser {
+    --folder-browser-large-text: var(--no);
+    --folder-browser-full-width: var(--no);
+    --folder-browser-max-columns: 3;
+    --folder-browser-max-visible-rows: 10;
+
+    position: relative
+}
+  }
+
+.plus {
+  height: 1.5em;
+  aspect-ratio: 1;
+  background: transparent url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_header/assets/images/plus.svg) no-repeat center / contain;
+  cursor: pointer
+}
+
+.plus.selected {
+    filter: brightness(0.5) sepia(1) hue-rotate(150deg) saturate(6);
+  }
+
+.plus {
+
+  button& {
+    font-size: inherit;
+    padding: 0;
+    border: none;
+  }
+}
+
+search-bar {
+  order: 1;
+  width: 100%;
+  -webkit-backdrop-filter: var(--main-header-backdrop-filter);
+          backdrop-filter: var(--main-header-backdrop-filter)
+}
+
+@media (min-width: 1025px) {
+
+search-bar {
+    order: unset;
+    flex: 1 1 auto;
+    width: unset
+}
+  }

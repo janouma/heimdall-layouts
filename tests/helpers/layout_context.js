@@ -26,8 +26,15 @@ export const mutations = {
 
   setSearchOffset () {},
   setSearchTags () {},
-  setSearchConnectees () {},
-  setSearchText () {},
+  setSearchConnectees () { },
+
+  setSearchText (text) {
+    state.search.set({
+      ...state.search.value,
+      text
+    })
+  },
+
   setSearchWorkspace () {},
   setSearchIncludeDraft () {},
   setSearch () {},

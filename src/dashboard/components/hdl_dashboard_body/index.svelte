@@ -9,7 +9,7 @@
   import 'joi'
   import { onMount, onDestroy } from 'svelte'
   import { createValidator } from 'lib/validation.js'
-  import { getConfig } from 'lib/config.js'
+  import { getConfig, setConfig } from 'lib/config.js'
   import configUpdates from '../../lib/config_updates.js'
   import { gererateId } from '../../lib/utils.js'
   import '../hdl_dashboard_discovery/index.svelte'
@@ -158,12 +158,7 @@
       ? pined.with(replacedPinedSearchIndex, pinedSearch)
       : [...(pined ?? []), pinedSearch]
 
-    await fetch('/api/set-config/dashboard', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pined: updatedPined })
-    })
-
+    await setConfig('dashboard', { pined: updatedPined })
     layoutContext.mutations.setModal()
   }
 </script>

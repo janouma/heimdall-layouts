@@ -1,0 +1,612 @@
+import 'joi'
+import logger from '@byfrost/utils/logger.js'
+import { render } from '@byfrost/utils/string.js'
+import juris from 'lib/juris/instance.js'
+import { searchModes, WATCHED_WKSP, WATCHING_WKSP } from '../../lib/constants.js'
+import '../hdl_watch_detailed_view/index.esm'
+
+const ACTION_HIDE_DELAY = 3000
+
+const log = logger.getLogger('layout/watch/component/watch_movie_grid')
+const { joi, matchMedia } = window
+const { matches: isMouseDevice } = matchMedia('(hover: hover)')
+
+const transparentPixel = new Image()
+transparentPixel.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
+const MovieGrid = juris.createWebComponent(
+  'MovieGrid',
+
+  {
+    setUp () {
+      const subscriptions = []
+      let dragGhost
+      let dragPoster
+      let dragPosterCanditate
+      let dragTarget
+      let longTouchTimeoutId
+      let actionTimeoutId
+
+      return {
+        hooks: {
+          onConnect ({
+            component: { subscribe, getState },
+            services: { createValidator }
+          }) {
+            const validatorName = 'watch/movie_grid'
+
+            const validate = createValidator({
+              name: validatorName,
+              subscribe,
+              getState
+            })
+
+            subscriptions.push(
+              validate('messages', joi.object({
+                updateFailed: joi.string().required(),
+                removalFailed: joi.string().required(),
+                delete: joi.string().required(),
+                confirmDelete: joi.string().required(),
+                abortDelete: joi.string().required()
+              })),
+
+              validate('parent', joi.object().instance(HTMLElement)),
+
+              validate(
+                'items',
+
+                joi.array().items(
+                  joi.object({
+                    $id: joi.string(),
+                    title: joi.string().required(),
+                    url: joi.string().required(),
+                    snapshot: joi.string().allow(null),
+
+                    meta: joi.object({
+                      externalId: joi.alternatives(joi.string(), joi.number()),
+                      originalTitle: joi.string(),
+                      overview: joi.string(),
+                      score: joi.number(),
+                      date: joi.string(),
+                      duration: joi.number(),
+                      genres: joi.array().items(joi.string()),
+                      directors: joi.array().items(joi.string()),
+
+                      cast: joi.array().items(joi.object({
+                        name: joi.string().required(),
+                        character: joi.string(),
+                        picture: joi.string()
+                      })),
+
+                      seasonsCount: joi.number(),
+                      ended: joi.boolean(),
+                      statusUnknown: joi.boolean()
+                    }).allow(null).unknown()
+                  }).unknown()
+                ).optional().allow(null)
+              )
+            )
+          },
+
+          onMount ({ component: { shadowRoot, element: host, setState, getState, subscribe } }) {
+            const parent = getState('parent')
+
+            dragGhost = shadowRoot.querySelector('.drag-ghost')
+
+            if (isMouseDevice) {
+              parent.addEventListener('dragover', setDragGhostPosition)
+              subscriptions.push(() => parent.removeEventListener('dragover', setDragGhostPosition))
+            } else {
+              parent.addEventListener('touchmove', simulateDragOver)
+              subscriptions.push(() => parent.removeEventListener('touchmove', simulateDragOver))
+            }
+
+            subscriptions.push(subscribe('items', () => {
+              const gridImages = shadowRoot.querySelectorAll('.poster-visual[src]')
+
+              for (const image of gridImages) {
+                image.classList.remove('loaded', 'loaderror')
+              }
+
+              // FIXME: Possibly requestAnimationFrame wrap needed
+              setState({ reorder: { failure: false }, removal: { failure: false } })
+            }))
+
+            function setDragGhostPosition ({ clientX, clientY }) {
+              const { left: hostX, top: hostY } = host.getBoundingClientRect()
+              const relativeX = clientX - hostX
+              const relativeY = clientY - hostY
+
+              Object.assign(dragGhost.style, {
+                left: relativeX + 'px',
+                top: relativeY + 'px'
+              })
+            }
+
+            function simulateDragOver (event) {
+              clearTimeout(actionTimeoutId)
+              setState('deletableItem', undefined)
+
+              const { touches: [{ clientX, clientY }] } = event
+              const target = shadowRoot.elementFromPoint(clientX, clientY)
+
+              if (target !== dragPosterCanditate) {
+                clearTimeout(actionTimeoutId)
+              }
+
+              if (dragPoster) {
+                event.preventDefault()
+                dragGhost.classList.add('touch-active')
+                dragPoster.classList.add('touch-active')
+                setDragGhostPosition({ clientX, clientY })
+
+                if (dragTarget !== target) {
+                  dragTarget?.classList.remove('drag-target')
+                  dragTarget = undefined
+                }
+
+                if (target?.matches('.grid-poster')) {
+                  dragTarget = target
+
+                  const { left: targetX, width: targetWidth } = target.getBoundingClientRect()
+                  const relativeX = clientX - targetX
+                  const index = parseInt(target.style.order)
+
+                  const isLastDropzone =
+                    index + 1 === getState('items').length && relativeX >= targetWidth * 0.75
+
+                  target.classList.add('drag-target')
+                  target.classList.toggle('last', isLastDropzone)
+                }
+              }
+            }
+          },
+
+          onUnmount () {
+            dragGhost = undefined
+            clearTimeout(longTouchTimeoutId)
+            clearTimeout(actionTimeoutId)
+
+            if (subscriptions.length > 0) {
+              for (const unsubscribe of subscriptions) {
+                unsubscribe()
+              }
+            }
+          }
+        },
+
+        render (_/* props */, {
+          component: { getState, setState, shadowRoot, emit },
+          services: { HdlWatch: { getLayoutState }, createMessageGetter },
+          ItemsManager
+        }) {
+          const getMessage = createMessageGetter(getState)
+
+          const isDraggable = () => getLayoutState('selectedPlaylist') &&
+            getLayoutState('searchMode') === searchModes.FIND &&
+            !getLayoutState('searching') && !getState('reorder.pending') &&
+            !getState('removal.pending')
+
+          function revealDragGhost (ghost) {
+            ghost.style.visibility = 'hidden'
+            const ghostImage = ghost.querySelector('img')
+            ghostImage.loading = 'eager'
+            dragGhost.appendChild(ghost)
+
+            if (ghostImage.complete) {
+              ghost.style.visibility = 'visible'
+            } else {
+              ghostImage
+                .addEventListener(
+                  'load',
+                  () => requestAnimationFrame(() => {
+                    ghost.style.visibility = 'visible'
+                  })
+                )
+            }
+          }
+
+          async function updatePlaylist () {
+            setState({ reorder: { pending: true, failure: false } })
+            const posters = [...shadowRoot.querySelectorAll('.movie-grid > .grid-poster')]
+
+            const updates = posters.toSorted(
+              ({ style: { order: a } }, { style: { order: b } }) => a.localeCompare(b)
+            )
+              .map(poster => poster.getAttribute('id'))
+
+            const playlist = getLayoutState('selectedPlaylist')
+
+            log.debug({ playlist, updates })
+
+            try {
+              await ItemsManager.savePlaylist(playlist, updates)
+              setState('reorder.pending', false)
+            } catch (error) {
+              setState({ reorder: { pending: false, failure: true } })
+              log.error(`unable to update playlist "${playlist}" with [${updates}] due to error:\n`, error)
+
+              for (const [index, poster] of posters.entries()) {
+                poster.style.order = index
+              }
+            }
+          }
+
+          return [
+            {
+              link: {
+                rel: 'stylesheet',
+                href: import.meta.resolve('./styles/index.css'),
+                onload: () => setState('styleLoaded', true)
+              }
+            },
+
+            {
+              section: {
+                class () {
+                  const classes = ['movie-grid animated']
+
+                  if (getState('reorder.pending')) {
+                    classes.push('pending')
+                  }
+
+                  if (getState('reorder.failure')) {
+                    classes.push('failure')
+                  }
+
+                  return classes.join(' ')
+                },
+
+                title: () => getState('reorder.failure') ? getMessage('updateFailed') : '',
+                style: () => ({ visibility: getState('styleLoaded') ? 'visible' : 'hidden' }),
+
+                children: () => getState('items')?.map((item, index, items) => {
+                  const { $id, snapshot, title, workspaces } = item
+                  let status
+
+                  if (workspaces?.includes(WATCHING_WKSP)) {
+                    status = 'watching'
+                  }
+
+                  if (workspaces?.includes(WATCHED_WKSP)) {
+                    status = 'watched'
+                  }
+
+                  return {
+                    div: {
+                      id: $id,
+
+                      class () {
+                        const classes = ['grid-poster animated']
+
+                        if (getState('removal.pending') === item.$id) {
+                          classes.push('pending')
+                        }
+
+                        if (getState('removal.failure') === item.$id) {
+                          classes.push('failure')
+                        }
+
+                        return classes.join(' ')
+                      },
+
+                      title: () => getState('removal.failure') === item.$id
+                        ? render(getMessage('removalFailed'), { title })
+                        : title,
+
+                      style: { order: index },
+                      draggable: () => isDraggable() && isMouseDevice,
+
+                      ...(isMouseDevice && {
+                        ondragstart ({ target, dataTransfer, clientX, clientY }) {
+                          dragPoster = target
+                          const ghost = target.cloneNode(true)
+                          dragPoster.classList.add('drag-source')
+
+                          Object.assign(dragGhost.style, {
+                            left: clientX + 'px',
+                            top: clientY + 'px'
+                          })
+
+                          Object.assign(ghost.style, {
+                            width: target.offsetWidth + 'px',
+                            height: target.offsetHeight + 'px'
+                          })
+
+                          revealDragGhost(ghost)
+                          dataTransfer.setDragImage(transparentPixel, 0, 0)
+                        },
+
+                        ondragover (event) {
+                          event.preventDefault()
+
+                          const { target, clientX } = event
+                          const { left: targetX, width: targetWidth } = target.getBoundingClientRect()
+                          const relativeX = clientX - targetX
+                          const isLastDropzone = index + 1 === items.length && relativeX >= targetWidth * 0.75
+
+                          dragTarget = target
+                          target.classList.add('drag-target')
+                          target.classList.toggle('last', isLastDropzone)
+                        },
+
+                        ondragleave ({ target }) {
+                          target.classList.remove('drag-target')
+                          dragTarget = undefined
+                        },
+
+                        ondrop ({ target, clientX }) {
+                          if (target !== dragPoster) {
+                            const { left: targetX, width: targetWidth } = target.getBoundingClientRect()
+                            const relativeX = clientX - targetX
+                            const isLastDropzone = index + 1 === items.length && relativeX >= targetWidth * 0.75
+
+                            // eslint-disable-next-line eqeqeq
+                            const shouldUpdate = isLastDropzone || dragPoster.style.order != index - 1
+
+                            if (shouldUpdate) {
+                              if (!isLastDropzone) {
+                                const followingPosters =
+                                  [...shadowRoot.querySelectorAll('.drag-target, .drag-target ~ .grid-poster')]
+                                    .filter(poster => poster !== dragPoster)
+
+                                for (const [position, poster] of followingPosters.entries()) {
+                                  poster.style.order = index + position + 1
+                                }
+
+                                dragPoster.style.order = index
+                              } else {
+                                dragPoster.style.order = index + 1
+                              }
+
+                              updatePlaylist()
+                            }
+                          }
+
+                          target.classList.remove('drag-target')
+                          dragTarget = undefined
+                        },
+
+                        ondragend () {
+                          dragPoster.classList.remove('drag-source')
+                          dragGhost.replaceChildren()
+                          dragTarget = undefined
+                          requestAnimationFrame(() => { dragPoster = undefined })
+                        }
+                      }),
+
+                      ontouchstart ({ target, touches: [{ clientX, clientY }] }) {
+                        const LONG_TOUCH_DELAY = 1500
+                        clearTimeout(longTouchTimeoutId)
+
+                        if (getState('deletableItem') !== item.$id) {
+                          setState('deletableItem', undefined)
+                        }
+
+                        dragPosterCanditate = target
+
+                        longTouchTimeoutId = setTimeout(() => {
+                          clearTimeout(actionTimeoutId)
+
+                          if (isDraggable()) {
+                            dragPoster = target
+                            const ghost = target.cloneNode(true)
+                            dragPoster.classList.add('drag-source')
+
+                            Object.assign(dragGhost.style, {
+                              left: clientX + 'px',
+                              top: clientY + 'px'
+                            })
+
+                            Object.assign(ghost.style, {
+                              width: target.offsetWidth + 'px',
+                              height: target.offsetHeight + 'px'
+                            })
+
+                            revealDragGhost(ghost)
+                          }
+
+                          setState('deletableItem', item.$id)
+
+                          actionTimeoutId = setTimeout(
+                            setState,
+                            ACTION_HIDE_DELAY,
+                            'deletableItem',
+                            undefined
+                          )
+                        }, LONG_TOUCH_DELAY)
+                      },
+
+                      ontouchend () {
+                        dragPosterCanditate = undefined
+                        clearTimeout(longTouchTimeoutId)
+
+                        if (isDraggable() && dragPoster) {
+                          if (dragTarget && dragTarget !== dragPoster) {
+                            const isLastDropzone = dragTarget.matches('.last')
+                            const dragTargetIndex = parseInt(dragTarget.style.order)
+
+                            // eslint-disable-next-line eqeqeq
+                            const shouldUpdate = isLastDropzone || dragPoster.style.order != dragTargetIndex - 1
+
+                            if (shouldUpdate) {
+                              if (!isLastDropzone) {
+                                const followingPosters =
+                                  [...shadowRoot.querySelectorAll('.drag-target, .drag-target ~ .grid-poster')]
+                                    .filter(poster => poster !== dragPoster)
+
+                                for (const [position, poster] of followingPosters.entries()) {
+                                  poster.style.order = dragTargetIndex + position + 1
+                                }
+
+                                dragPoster.style.order = dragTargetIndex
+                              } else {
+                                dragPoster.style.order = dragTargetIndex + 1
+                              }
+
+                              updatePlaylist()
+                            }
+                          }
+
+                          dragPoster.classList.remove('drag-source', 'touch-active')
+                          dragGhost.replaceChildren()
+                          dragGhost.classList.remove('touch-active')
+                          dragPoster = undefined
+                          dragTarget?.classList.remove('drag-target')
+                          dragTarget = undefined
+                        }
+                      },
+
+                      async onclick ({ target, clientX, clientY }) {
+                        setState('removal.failure', undefined)
+
+                        const deleteBtnHitArea = target.querySelector('.delete.active > .hit-area')
+                        const isDeleteRequest = isHit(deleteBtnHitArea, clientX, clientY)
+
+                        const confirmBtnHitArea = target.querySelector('.confirm-delete.active .confirm > .hit-area')
+                        const isConfirm = isHit(confirmBtnHitArea, clientX, clientY)
+
+                        const abortBtnHitArea = target.querySelector('.confirm-delete.active .abort > .hit-area')
+                        const isAbort = isHit(abortBtnHitArea, clientX, clientY)
+
+                        if (!isDeleteRequest && !isConfirm && !isAbort) {
+                          emit('detail', item, { bubbles: false })
+                        } else {
+                          if (!isConfirm && !isAbort) {
+                            setState({
+                              confirmDeleteItem: item.$id,
+                              deletableItem: undefined
+                            })
+
+                            actionTimeoutId = setTimeout(
+                              setState,
+                              ACTION_HIDE_DELAY,
+                              'confirmDeleteItem',
+                              undefined
+                            )
+                          } else {
+                            clearTimeout(actionTimeoutId)
+
+                            setState({
+                              confirmDeleteItem: undefined,
+                              deletableItem: undefined
+                            })
+                          }
+
+                          if (isConfirm) {
+                            setState('removal.pending', item.$id)
+
+                            try {
+                              await ItemsManager.remove(item.$id)
+                              setState('removal.pending', undefined)
+                            } catch (error) {
+                              setState({ removal: { pending: undefined, failure: item.$id } })
+                              log.error('Unable to remove item\n', item, '\ndue to error:\n', error)
+                            }
+                          }
+                        }
+                      },
+
+                      children () {
+                        const children = []
+
+                        if (snapshot) {
+                          children.push({
+                            img: {
+                              class: 'poster-visual animated',
+                              src: snapshot,
+                              alt: title,
+                              loading: 'lazy',
+                              onload ({ target }) { target.classList.add('loaded') },
+                              onerror ({ target }) { target.classList.add('loaderror') }
+                            }
+                          })
+                        } else {
+                          children.push({ img: { class: 'poster-visual loaderror', alt: title } })
+                        }
+
+                        if (status) {
+                          children.push({ div: { class: 'status ' + status } })
+                        }
+
+                        if (getLayoutState('searchMode') === searchModes.FIND) {
+                          children.push(
+                            {
+                              button: {
+                                title: getMessage('delete'),
+
+                                class () {
+                                  const classes = ['delete animated']
+
+                                  if (getState('deletableItem') === item.$id || isMouseDevice) {
+                                    classes.push('active')
+                                  }
+
+                                  return classes.join(' ')
+                                },
+
+                                children: { div: { class: 'hit-area' } }
+                              }
+                            },
+                            {
+                              div: {
+                                class () {
+                                  const classes = ['confirm-delete animated']
+
+                                  if (getState('confirmDeleteItem') === item.$id) {
+                                    classes.push('active')
+                                  }
+
+                                  return classes.join(' ')
+                                },
+
+                                children: [
+                                  {
+                                    button: {
+                                      title: getMessage('abortDelete'),
+                                      class: 'abort',
+                                      children: { div: { class: 'hit-area' } }
+                                    }
+                                  },
+                                  {
+                                    button: {
+                                      title: getMessage('confirmDelete'),
+                                      class: 'confirm',
+                                      children: { div: { class: 'hit-area' } }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          )
+                        }
+
+                        return children
+                      }
+                    }
+                  }
+                })
+              }
+            },
+
+            { div: { class: 'drag-ghost' } }
+          ]
+        }
+      }
+    }
+  },
+
+  {
+    autoRerender: false,
+    accessors: ['messages', 'parent', 'items']
+  }
+)
+
+function isHit (elt, x, y) {
+  if (!elt) { return false }
+
+  const { left, right, top, bottom } = elt.getBoundingClientRect()
+  return x >= left && x <= right && y >= top && y <= bottom
+}
+
+export default MovieGrid

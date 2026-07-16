@@ -1,5 +1,62 @@
 {
   "body": {
-    "title": "watch"
+    "manualAdd": "add manually",
+    "disclamer": "This product uses the ${tmdbLogo} API but is not endorsed or certified by TMDB."
+  },
+
+  "carousel": {
+    "back": "back",
+    "forward": "forward"
+  },
+
+  "header": {
+    "showItemType": "show ${itemType}s",
+    "addItem": "add ${itemType}",
+    "playlists": "play lists",
+    "searchBar": {
+      "searchNItems": "${count} items found"
+    }
+  },
+
+  "detailedView": {
+    "score": "score",
+    "director": "director",
+    "creator": "creator·s",
+    "year": "year",
+    "synopsis": "synopsis",
+    "depth": "depth",
+    "visibility": "visibility",
+    "followUp": "follow up",
+    "playlist": "playlist",
+    "playlistPlaceholder": "Assign a playlist",
+    "addMovie": "add movie",
+    "addTvShow": "add tv show",
+    "setPlaylist": "set playlist",
+    "d3": "3D",
+    "shared": "shared",
+    "watched": "watched",
+    "watching": "watching",
+    "clear": "clear",
+    "save": "save",
+    "noReleaseDate": "no date",
+    "noClassification": "no classification",
+    "noDuration": "no duration",
+    "unknown": "unknown",
+    "playlistHint": "to set default",
+    "title": "title",
+    "url": "url",
+    "durationFormat": {
+      "movie": "H[h] mm",
+      "tv show": "Y [year·s] M [month·s]"
+    },
+    "updateFailed": "Update failed"
+  },
+
+  "movieGrid": {
+    "updateFailed": "Update failed",
+    "removalFailed": "Removal of \"${title}\" failed",
+    "delete": "Delete",
+    "confirmDelete": "Confirm delete",
+    "abortDelete": "Abort delete"
   }
 }

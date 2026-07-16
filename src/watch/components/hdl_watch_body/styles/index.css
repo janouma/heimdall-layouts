@@ -1,0 +1,338 @@
+@import "@heimdall/shared-lib/style/animation/animated.css";
+@import "@heimdall/shared-lib/style/fx/hover_fx.css";
+
+@keyframes darken {
+  to {
+    filter: brightness(var(--scroll-ratio, 0)) blur(var(--dynamic-blur));
+  }
+}
+
+@keyframes raise {
+  to {
+    --movie-grid-shadow-length: 5em;
+    --movie-grid-shadow-color: var(--dynamic-grid-shadow-color);
+  }
+}
+
+:host {
+  --dynamic-blur: calc((1 - var(--scroll-ratio, 1)) * 0.4em);
+
+  --grid-shadow-color: color-mix(
+    in srgb,
+    rgba(0, 0, 0, 80%),
+    rgba(var(--deepspace), 80%)
+  );
+
+  --dyn-grid-shadow-opacity: calc((1 - var(--scroll-ratio, 1)) * 0.8);
+
+  --dynamic-grid-shadow-color: color-mix(
+    in srgb,
+    rgba(0, 0, 0, var(--dyn-grid-shadow-opacity)),
+    rgba(var(--deepspace), var(--dyn-grid-shadow-opacity))
+  );
+
+  --main-header-height: 3.93em;
+  --size-menu-width: 0;
+  --poster-aspect-ratio: 2 / 3;
+  --animation-easing: cubic-bezier(0, 1, 0.3, 1);
+
+  --hero-min-top-margin: 1.413em;
+
+  --hero-top-margin: calc(
+    var(--hero-min-top-margin) + var(--main-header-height)
+  );
+
+  --hero-poster-shadow-length: 2.5em;
+
+  --hero-poster-shadow-expanded-length: calc(
+    var(--hero-poster-shadow-length) * 1.25
+  );
+
+  --hero-adjusted-top-margin: calc(
+    var(--hero-top-margin) - var(--hero-poster-shadow-expanded-length)
+  );
+
+  --hero-bottom-margin: calc(
+    3.756em - var(--hero-poster-shadow-expanded-length)
+  );
+
+  --hero-poster-height: calc(
+    1em * var(--median-poster-width) * (1 / (var(--poster-aspect-ratio)))
+  );
+
+  --hero-carousel-height: calc(
+    var(--hero-poster-height) + 2 * var(--hero-poster-shadow-expanded-length)
+  );
+
+  @media (width > env(--small-screen)) {
+    --hero-top-margin: var(--hero-min-top-margin);
+    --size-menu-width: 4.78em;
+  }
+
+  @media (width > env(--mini-screen)) {
+    --animation-easing: cubic-bezier(0, 0.35, 0.35, 0.9);
+  }
+
+  position: relative;
+  padding: var(--main-header-height) 0 1em var(--size-menu-width);
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  background-image: radial-gradient(
+    circle at top,
+    hsla(0, 0%, 0%, 0.975) 0%,
+    hsla(0, 0%, 0%, 0.965) 10%,
+    hsla(0, 0%, 0%, 0.94) 20%,
+    hsla(0, 0%, 0%, 0.89) 30%,
+    hsla(0, 0%, 0%, 0.82) 40%,
+    hsla(0, 0%, 0%, 0.72) 50%,
+    hsla(0, 0%, 0%, 0.59) 62.5%,
+    hsla(0, 0%, 0%, 0.44) 75%,
+    hsla(0, 0%, 0%, 0.3) 87.5%,
+    hsla(0, 0%, 0%, 0.18) 100%,
+    hsla(0, 0%, 0%, 0.08) 112.5%,
+    hsla(0, 0%, 0%, 0) 125%
+  );
+}
+
+.poster-visual {
+  display: flex;
+  width: 100%;
+  height: 100%;
+
+  img& {
+    object-fit: cover;
+  }
+}
+
+/* ===================================================================
+   Hero Carousel
+   =================================================================== */
+
+.hero-carousel {
+  --gap: 0.35em;
+
+  position: sticky;
+  top: var(--hero-adjusted-top-margin);
+  margin-block: var(--hero-adjusted-top-margin) var(--hero-bottom-margin);
+  isolation: isolate;
+
+  /* firefox hack to ensure filter reset on .searching class toggle */
+  filter: brightness(100%) blur(0);
+  height: var(--hero-carousel-height);
+
+  mask-image: linear-gradient(
+    to right,
+    hsla(0, 0%, 0%, 0) 0%,
+    hsla(0, 0%, 0%, 0.04) 4%,
+    hsla(0, 0%, 0%, 0.16) 8%,
+    hsla(0, 0%, 0%, 0.38) 13%,
+    hsla(0, 0%, 0%, 0.64) 18%,
+    hsla(0, 0%, 0%, 0.88) 23%,
+    hsla(0, 0%, 0%, 1) 30%,
+    hsla(0, 0%, 0%, 1) 70%,
+    hsla(0, 0%, 0%, 0.88) 77%,
+    hsla(0, 0%, 0%, 0.64) 82%,
+    hsla(0, 0%, 0%, 0.38) 87%,
+    hsla(0, 0%, 0%, 0.16) 92%,
+    hsla(0, 0%, 0%, 0.04) 96%,
+    hsla(0, 0%, 0%, 0) 100%
+  );
+
+  overflow: hidden;
+
+  @supports (animation-timeline: scroll()) {
+    animation: darken var(--animation-easing) both;
+    animation-timeline: scroll();
+  }
+
+  &.searching {
+    filter: brightness(50%) blur(0.4em);
+    animation: revert;
+    animation-timeline: revert;
+  }
+
+  .back,
+  .forward {
+    --margin: 12.5%;
+
+    position: absolute;
+    color: rgb(var(--eggshell));
+    inset: 0 auto;
+    align-self: center;
+    appearance: none;
+    border: none;
+    width: 2.2em;
+    height: 1.4em;
+    visibility: hidden;
+    opacity: 0;
+
+    background: transparent url(assets/images/chevron.svg) center/contain
+      no-repeat;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -1em;
+      border-radius: 3em;
+    }
+
+    @media (hover: none) {
+      display: none;
+    }
+  }
+
+  &:is(:hover, .manual-switch) :where(.back, .forward) {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .back {
+    left: var(--margin);
+    rotate: 90deg;
+  }
+
+  .forward {
+    right: var(--margin);
+    rotate: -90deg;
+  }
+}
+
+.hero-poster {
+  background: url(assets/images/blackhole.webp) no-repeat center / cover;
+}
+
+.hero-poster {
+  --animated-properties: translate, scale;
+  @mixin add-transition-properties var(--animated-properties);
+
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: calc(1em * var(--std-poster-width));
+  aspect-ratio: var(--poster-aspect-ratio);
+  border-radius: 0.35em;
+  overflow: hidden;
+
+  @media (hover: hover) {
+    &.detailable {
+      cursor: pointer;
+
+      > img {
+        @mixin add-transition-properties scale;
+      }
+
+      &:hover > img {
+        scale: 1.125;
+      }
+    }
+  }
+}
+
+/* ===================================================================
+   MOVIE GRID
+   =================================================================== */
+
+hdl-watch-movie-grid.searching,
+.manual-add {
+  translate: 0
+    calc(
+      -1 *
+        (
+          var(--hero-poster-height) + var(--hero-bottom-margin) +
+            var(--hero-poster-shadow-expanded-length)
+        )
+    );
+}
+
+hdl-watch-movie-grid {
+  --movie-grid-shadow-length: 0;
+  --movie-grid-shadow-color: transparent;
+
+  transition-property: box-shadow, translate;
+
+  @supports (animation-timeline: scroll()) {
+    animation: raise var(--animation-easing) both;
+    animation-timeline: scroll();
+  }
+
+  &.searching {
+    --movie-grid-shadow-length: 5em;
+    --movie-grid-shadow-color: var(--grid-shadow-color);
+    animation-timeline: revert;
+  }
+}
+
+.manual-add {
+  position: absolute;
+  inset: auto 0;
+  justify-self: center;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: inherit;
+  letter-spacing: 0.05em;
+  text-wrap: nowrap;
+  text-transform: capitalize;
+  cursor: pointer;
+  background-color: transparent;
+  visibility: hidden;
+  opacity: 0;
+
+  &.visible {
+    visibility: visible;
+    opacity: 100%;
+  }
+
+  > span {
+    border-radius: 0.24em;
+    background-color: var(--transluent);
+    display: inline-block;
+    padding: 0.5em 0.8em;
+
+    @media (hover: none) {
+      @media (orientation: portrait) {
+        font-size: 2em;
+      }
+
+      @media (orientation: landscape) {
+        font-size: 1.5em;
+      }
+    }
+  }
+}
+
+scroll-sentinel-container {
+  position: relative;
+  display: block;
+  height: 0;
+}
+
+scroll-sentinel {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 100px;
+}
+
+footer {
+  --font-size: 0.72em;
+
+  position: fixed;
+  font-weight: bold;
+  font-size: var(--font-size);
+  inset: auto auto 2.25em 50%;
+  padding: 0.4em 0.75em;
+  translate: -50% 0;
+  background-color: rgba(var(--deepspace), 62.5%);
+  border-radius: 100px;
+  text-wrap: nowrap;
+
+  > img {
+    height: var(--font-size);
+  }
+}

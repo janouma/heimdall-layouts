@@ -9,10 +9,11 @@ browserSync({
     cert: 'assets/ssl/cert.pem'
   },
 
+  ghostMode: false,
   port: env.port,
   open: false,
   ui: false,
   cors: true,
-  reloadDebounce: 2000,
+  reloadDebounce: 2500,
   files: '{lib/**/*,layouts/**/*,tests/**/@(views|assets|helpers)/**/*,tests/*,index}.{js,cjs,mjs,html,css,png,jpg,svg}'
 })
