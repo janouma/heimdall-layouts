@@ -1,23 +1,24 @@
 import { test } from '@japa/runner'
 import * as td from 'testdouble'
-import { createValidator } from '../../../lib/validation.js'
+
+let createValidator
 
 test.group('#createValidator', group => {
   const nativeConsoleError = console.error
 
-  group.each.setup(() => {
-    globalThis.document = {
-      documentElement: {
-        classList: {
-          contains: td.function('contains')
-        }
-      }
-    }
+  group.each.setup(async () => {
+    await td.replaceEsm(
+      '../../../lib/environment.js',
+      { isDevelopment: true }
+    );
+
+    ({ createValidator } =
+      await import(`../../../lib/validation.js?t=${Date.now()}.${performance.now()}`))
   })
 
   group.each.teardown(() => {
     console.error = nativeConsoleError
-    delete globalThis.document
+    td.reset()
   })
 
   test('successfull validation', ({ expect }) => {
@@ -25,19 +26,13 @@ test.group('#createValidator', group => {
     const component = 'widget'
     const value = 'value'
     const prop = 'prop'
-    const schema = { label: td.function('label') }
     const schemaValidate = td.function('schemaValidate')
+    const schema = { validate: schemaValidate }
 
     console.error = td.function('error')
 
-    td.when(document.documentElement.classList.contains('development'))
-      .thenReturn(true)
-
     td.when(schemaValidate(value, { convert: false }))
       .thenReturn({})
-
-    td.when(schema.label(`hdl-${layout}-${component}/${prop}`))
-      .thenReturn({ validate: schemaValidate })
 
     const validate = createValidator(`${layout}/${component}`)
     validate(value, prop, schema)
@@ -50,39 +45,34 @@ test.group('#createValidator', group => {
     const component = 'widget'
     const value = 'value'
     const prop = 'prop'
-    const schema = { label: td.function('label') }
     const schemaValidate = td.function('schemaValidate')
+    const schema = { validate: schemaValidate }
     const error = { message: 'Validation failure' }
 
     console.error = td.function('error')
 
-    td.when(document.documentElement.classList.contains(td.matchers.anything()))
-      .thenReturn(true)
-
     td.when(schemaValidate(td.matchers.isA(String), td.matchers.isA(Object)))
       .thenReturn({ error })
-
-    td.when(schema.label(td.matchers.isA(String)))
-      .thenReturn({ validate: schemaValidate })
 
     const validate = createValidator(`${layout}/${component}`)
     validate(value, prop, schema)
 
-    td.verify(console.error(error.message))
+    td.verify(console.error(`${component}/${prop}: ${error.message}`))
   })
 
   test('validation skip for production', ({ expect }) => {
-    td.when(document.documentElement.classList.contains('development'))
-      .thenReturn(false)
+    expect(() => createValidator()).not.toThrow()
 
-    const validate = createValidator()
+    const validate = createValidator('layout/component')
     expect(() => validate()).not.toThrow()
+  }).setup(async () => {
+    await td.replaceEsm('../../../lib/environment.js', { isDevelopment: false });
+
+    ({ createValidator } =
+      await import(`../../../lib/validation.js?t=${Date.now()}.${performance.now()}`))
   })
 
   test('path argument validation', ({ expect }) => {
-    td.when(document.documentElement.classList.contains(td.matchers.anything()))
-      .thenReturn(true)
-
     expect(() => createValidator()).toThrow('"path" argument is missing')
 
     const path = 'dashboard'
@@ -91,11 +81,7 @@ test.group('#createValidator', group => {
   })
 
   test('validator arguments validation', ({ expect }) => {
-    td.when(document.documentElement.classList.contains(td.matchers.anything()))
-      .thenReturn(true)
-
     const validate = createValidator('dashboard/widget')
-
     expect(() => validate('value')).toThrow('"propName" argument is missing')
     expect(() => validate('value', 'prop')).toThrow('"schema" argument is missing')
   })

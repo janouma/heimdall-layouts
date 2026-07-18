@@ -1,25 +1,21 @@
 import shell from 'shelljs'
 import createSimpleGit from 'simple-git'
-import { resolve as resolvePath, sep as slash } from 'path'
+import { resolve as resolvePath, sep as slash, join } from 'path'
 
 build()
 
 async function build () {
   try {
-    const sources = process.argv.slice(2).map(source => resolvePath(source))
-    const sourceDir = resolvePath('src')
-    const layoutsFiles = sources.filter(source => source.startsWith(sourceDir + slash))
-    const layoutDirMatcher = new RegExp(`^${sourceDir}${slash}(.+?)${slash}.*$`)
-    const layouts = dedup(layoutsFiles.map(file => file.replace(layoutDirMatcher, '$1')))
+    const git = createSimpleGit()
+    const allLayouts = shell.ls('src').stdout.trim().split('\n')
+    const layouts = await getTracked({ git, dirs: allLayouts, parent: 'src' })
 
-    process.stdout.write(`sources:\n  ${sources.join('\n  ')}\n`)
     process.stdout.write(`\nlayouts:\n  ${layouts.join('\n  ')}\n`)
 
     for (const layout of layouts) {
       shell.exec(`npm run build:layout -- name=${layout}`)
     }
 
-    const git = createSimpleGit()
     const status = await git.status()
     const newlyDeleted = status.deleted.filter(file => !status.staged.includes(file))
 
@@ -57,6 +53,11 @@ async function build () {
   }
 }
 
-function dedup (list) {
-  return Array.from(new Set(list))
+async function getTracked ({ git, dirs, parent }) {
+  const filtered = dirs.map(async dir => {
+    const result = await git.raw(['ls-files', join(parent, dir)])
+    return result.trim().length > 0 && dir
+  })
+
+  return (await Promise.all(filtered)).filter(dir => Boolean(dir))
 }

@@ -13,7 +13,7 @@
     "lint": "eslint --no-error-on-unmatched-pattern",
     "standalone-lint": "npm run lint -- '{tests/**/*,lib/**/*,scripts/**/*,src/**/*,index,playwright.config}.{js,cjs,mjs,svelte,esm}'",
     "test": "npm run test:node && npm run setup:test:ui && (PLAYWRIGHT_RETRY=4 npm run test:ui || npm run test:ui:retry -- maxAttempts=4) && npm run teardown:test:ui",
-    "test:node": "NODE_ENV=test node bin/test.js",
+    "test:node": "NODE_ENV=test node --loader=testdouble bin/test.js",
     "setup:test:ui": "NODE_ENV=test npm run build:shared && NODE_ENV=test npm run build:all-components",
     "test:ui": "NODE_ENV=test npx playwright test",
     "test:ui:retry": "NODE_ENV=test node scripts/retry_ui_test.js",
