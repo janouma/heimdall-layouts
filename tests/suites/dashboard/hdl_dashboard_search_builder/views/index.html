@@ -57,10 +57,10 @@
           'droplets conf'
         ],
 
-        tags: layoutContext.state.tags.value,
-        tagaliases: layoutContext.computed.tagAliases.value,
-        connections: layoutContext.state.connections.value,
-        user: layoutContext.state.session.value.user
+        tags: layoutContext.state.tags.valueForTest,
+        tagaliases: layoutContext.computed.tagAliases.valueForTest,
+        connections: layoutContext.state.connections.valueForTest,
+        user: layoutContext.state.session.valueForTest.user
       })
 
       component.addEventListener('pin', ({ detail }) => console.debug('pin event detail:', detail))

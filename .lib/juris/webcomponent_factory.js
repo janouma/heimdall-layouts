@@ -1,4 +1,4 @@
-import logger from '../../../packages/@byfrost/utils/logger.js'
+import logger from '../../packages/@byfrost/utils/logger.js'
 import { flattenObject } from './utils.js'
 
 const accessorNamePattern = /^[^\d\W]\w*$/

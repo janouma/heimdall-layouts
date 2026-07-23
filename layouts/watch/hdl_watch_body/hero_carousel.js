@@ -1,5 +1,5 @@
-import logger from '../../../../packages/@byfrost/utils/logger.js'
-import juris from '../../../../.lib/juris/instance.js'
+import logger from '../../../packages/@byfrost/utils/logger.js'
+import juris from '../../../.lib/juris/instance.js'
 
 export const STD_POSTER_WIDTH = 12.75
 export const MEDIAN_POSTER_WIDTH = 18.331

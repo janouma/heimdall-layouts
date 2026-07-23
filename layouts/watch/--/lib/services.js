@@ -1,6 +1,6 @@
-import logger from '../../../../../packages/@byfrost/utils/logger.js'
-import { flattenObject } from '../../../../../.lib/juris/utils.js'
-import juris from '../../../../../.lib/juris/instance.js'
+import logger from '../../../../packages/@byfrost/utils/logger.js'
+import { flattenObject } from '../../../../.lib/juris/utils.js'
+import juris from '../../../../.lib/juris/instance.js'
 
 const log = logger.getLogger('layout/watch/lib/services')
 const WATCH_STATE_KEY = `HdlWatchState_${Date.now()}_${String(performance.now()).replace('.', '_')}`

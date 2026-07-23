@@ -42,7 +42,7 @@ const HdlWatchHeader = juris.createWebComponent(
           },
 
           onMount ({
-            component: { shadowRoot },
+            component: { shadowRoot, getState, setState },
 
             services: {
               HdlWatch: {
@@ -85,6 +85,22 @@ const HdlWatchHeader = juris.createWebComponent(
 
             subscriptions.push(layoutSubscribe('itemType', syncSelectedPlaylist))
             subscriptions.push(layoutSubscribe('config.playlists', syncSelectedPlaylist))
+
+            const layoutContext = getState('layoutContext')
+
+            if (layoutContext?.state.connections) {
+              subscriptions.push(
+                layoutContext?.state.connections
+                  .subscribe(connections => setState('connections', connections))
+              )
+            }
+
+            if (layoutContext?.state.session) {
+              subscriptions.push(
+                layoutContext?.state.session
+                  .subscribe(session => setState('user', session?.user))
+              )
+            }
           },
 
           onUpdate ({ component: { shadowRoot } }) {
@@ -251,11 +267,11 @@ const HdlWatchHeader = juris.createWebComponent(
                 style: () => ({ visibility: getState('styleLoaded') ? 'visible' : 'hidden' }),
 
                 user: () => getLayoutState('searchMode') === searchModes.FIND
-                  ? getState('layoutContext.state.session.value.user')
+                  ? getState('user')
                   : undefined,
 
                 connections: () => getLayoutState('searchMode') === searchModes.FIND
-                  ? getState('layoutContext.state.connections.value')
+                  ? getState('connections')
                   : undefined,
 
                 'onsearch-update' ({ detail: search }) {

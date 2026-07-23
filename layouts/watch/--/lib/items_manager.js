@@ -1,7 +1,7 @@
-import logger from '../../../../../packages/@byfrost/utils/logger.js'
-import juris from '../../../../../.lib/juris/instance.js'
-import * as itemsApi from '../../../../../.lib/items.js'
-import { setConfig } from '../../../../../.lib/config.js'
+import logger from '../../../../packages/@byfrost/utils/logger.js'
+import juris from '../../../../.lib/juris/instance.js'
+import * as itemsApi from '../../../../.lib/items.js'
+import { setConfig } from '../../../../.lib/config.js'
 import * as itemsSeekerApi from './items_seeker.js'
 import { WATCH_TAG, defaultSearch } from './constants.js'
 

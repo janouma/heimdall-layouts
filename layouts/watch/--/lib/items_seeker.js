@@ -1,4 +1,4 @@
-import logger from '../../../../../packages/@byfrost/utils/logger.js'
+import logger from '../../../../packages/@byfrost/utils/logger.js'
 import dateUtil from './date.js'
 import { itemTypes } from './constants.js'
 
