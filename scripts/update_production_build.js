@@ -6,14 +6,30 @@ build()
 
 async function build () {
   try {
+    {
+      const cmdResults = shell.exec('npm run build:shared')
+
+      if (cmdResults.code > 0) {
+        throw new Error('failed to build shared components')
+      }
+    }
+
     const git = createSimpleGit()
-    const allLayouts = shell.ls('src').stdout.trim().split('\n')
+
+    const allLayouts = shell.ls('-d', 'src/*/')
+      .stdout.trim().split('\n')
+      .map(dir => dir.replaceAll(/^src\/|\/$/g, ''))
+
     const layouts = await getTracked({ git, dirs: allLayouts, parent: 'src' })
 
     process.stdout.write(`\nlayouts:\n  ${layouts.join('\n  ')}\n`)
 
     for (const layout of layouts) {
-      shell.exec(`npm run build:layout -- name=${layout}`)
+      const cmdResults = shell.exec(`npm run build:layout -- name=${layout}`)
+
+      if (cmdResults.code > 0) {
+        throw new Error('failed to build layout ' + layout)
+      }
     }
 
     const status = await git.status()

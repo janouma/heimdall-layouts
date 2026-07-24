@@ -6,4 +6,4 @@ if git branch | grep -q '^\* (no branch'; then
   exit 0
 fi
 
-npm run build:shared && npm run update-production-build && npx lint-staged
+npm run update-production-build && npx lint-staged
