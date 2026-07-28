@@ -66,25 +66,31 @@ const HdlWatchHeader = juris.createWebComponent(
 
             let folderBrowser
 
+            const isSelectedPlaylistAvailable =
+              playlist => getPlaylists()
+                .includes(playlist || getLayoutState('selectedPlaylist'))
+
+            subscriptions.push(layoutSubscribe('selectedPlaylist', setSelectedPlaylist))
+            setSelectedPlaylist(getLayoutState('selectedPlaylist'))
+
             function setSelectedPlaylist (playlist) {
               if (!folderBrowser?.isConnected) {
                 folderBrowser = shadowRoot.querySelector('folder-browser')
               }
 
-              folderBrowser.selected = playlist
-            }
-
-            subscriptions.push(layoutSubscribe('selectedPlaylist', setSelectedPlaylist))
-            setSelectedPlaylist(getLayoutState('selectedPlaylist'))
-
-            function syncSelectedPlaylist () {
-              if (!getPlaylists().includes(getLayoutState('selectedPlaylist'))) {
-                setLayoutState('selectedPlaylist', undefined)
-              }
+              folderBrowser.selected = isSelectedPlaylistAvailable(playlist)
+                ? playlist
+                : undefined
             }
 
             subscriptions.push(layoutSubscribe('itemType', syncSelectedPlaylist))
             subscriptions.push(layoutSubscribe('config.playlists', syncSelectedPlaylist))
+
+            function syncSelectedPlaylist () {
+              if (!isSelectedPlaylistAvailable()) {
+                setLayoutState('selectedPlaylist', undefined)
+              }
+            }
 
             const layoutContext = getState('layoutContext')
 

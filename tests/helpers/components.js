@@ -1,11 +1,21 @@
-export function getComponentHelpers ({ layout, component } = {}) {
+export function getComponentHelpers ({ layout, component, main = false } = {}) {
   if (!layout) { throw new Error('layout argument is missing') }
-  if (!component) { throw new Error('component argument is missing') }
+  if (!main && !component) { throw new Error('component argument is missing') }
 
-  const testViewsPath = `/tests/suites/${layout}/hdl_${layout}_${component}/views`
+  let componentId
+  let componentName
+
+  if (main) {
+    componentId = componentName = 'main'
+  } else {
+    componentId = component
+    componentName = `hdl_${layout}_${component}`
+  }
+
+  const testViewsPath = `/tests/suites/${layout}/${componentName}/views`
 
   return {
-    getComponentUrl ({ params = null } = {}) {
+    getComponentUrl ({ params = null, case: useCase } = {}) {
       const parsedParams = params
         ? Object.entries(params).reduce(
           (parsed, [key, value]) => Object.assign(
@@ -16,7 +26,8 @@ export function getComponentHelpers ({ layout, component } = {}) {
         )
         : params
 
-      return `${testViewsPath}/?env=playwright&params=${encodeURIComponent(JSON.stringify(parsedParams))}`
+      const htmlFile = useCase ? useCase + '.html' : ''
+      return `${testViewsPath}/${htmlFile}?env=playwright&params=${encodeURIComponent(JSON.stringify(parsedParams))}`
     },
 
     getComponentAssetPath (asset) {
@@ -26,10 +37,9 @@ export function getComponentHelpers ({ layout, component } = {}) {
 
     getScreenshotPath (useCase, name = 'screenshot') {
       if (!useCase) { throw new Error('useCase argument is missing') }
-      return [useCase, `${component}-${name}.png`]
+      return [useCase, `${componentId}-${name}.png`]
     },
 
-    tag: `hdl-${layout}-${component.replaceAll('_', '-')}`
-      .replace(/-body$/, '')
+    tag: main ? 'body' : `hdl-${layout}-${componentId.replaceAll('_', '-')}`
   }
 }

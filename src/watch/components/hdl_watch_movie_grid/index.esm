@@ -79,8 +79,7 @@ const MovieGrid = juris.createWebComponent(
                       })),
 
                       seasonsCount: joi.number(),
-                      ended: joi.boolean(),
-                      statusUnknown: joi.boolean()
+                      ended: joi.boolean()
                     }).allow(null).unknown()
                   }).unknown()
                 ).optional().allow(null)

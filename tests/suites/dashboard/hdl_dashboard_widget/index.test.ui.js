@@ -53,7 +53,7 @@ test('overflowed widget', async ({ page, context }) => {
   const linkTab = await tabLoad
   await linkTab.waitForLoadState()
 
-  return expect(linkTab.url()).toBe('https://lightningcss.dev/')
+  expect(linkTab.url()).toBe('https://lightningcss.dev/')
 })
 
 test('not overflowed widget', async ({ page }) => {

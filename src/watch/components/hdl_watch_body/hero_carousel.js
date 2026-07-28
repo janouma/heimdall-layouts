@@ -41,7 +41,12 @@ juris.registerComponent('HdlWatchHeroCarousel', (
   let posterSwitchStartX
   let switchingPoster = false
   let forcedSwitch = false
-  const sourcePosters = posters?.length > 0 ? posters : defaultCarouselPosters
+
+  if (posters?.length > CAROUSEL_SIZE) {
+    log.warn(`carousel displays only the first ${CAROUSEL_SIZE} posters`)
+  }
+
+  const sourcePosters = posters?.length > 0 ? posters.slice(0, CAROUSEL_SIZE) : defaultCarouselPosters
 
   // the first poster should be the median one
   const shiftedPosters = [
@@ -130,7 +135,7 @@ juris.registerComponent('HdlWatchHeroCarousel', (
             sourcePosters: shiftedPosters,
             backwardCursor,
             forwardCursor,
-            ondetail: index === MEDIAN_INDEX ? ondetail : undefined
+            ondetail: index === MEDIAN_INDEX && posters?.length > 0 ? ondetail : undefined
           }
         }))
 
@@ -359,7 +364,7 @@ juris.registerComponent('HdlWatchHeroPoster', ({
             (direction > 0 && index === lastIndex)
           )
         ) {
-          const maxOffset = direction * Math.floor(getHostState('carousel.posters').length / 2)
+          const maxOffset = direction * Math.floor(CAROUSEL_SIZE / 2)
           translate = `calc(${-100 * maxOffset - 50}% - ${maxOffset} * var(--gap)) -50%`
 
           if (!posterUpdated) {

@@ -1,8 +1,16 @@
-export function applyParameters (element, defaults) {
+export function applyParameters (element, defaults, parsedParameters) {
+  const parameters = parsedParameters ?? getParameters()
+  console.debug('parsed parameters:', parameters)
+  Object.assign(element, defaults, parameters)
+}
+
+export function getParameters () {
   const serializedParams = (new URL(document.location.href)).searchParams.get('params')
   const parameters = JSON.parse(serializedParams)
 
-  const parsedParameters = parameters
+  console.debug('raw parameters:', parameters)
+
+  return parameters
     ? Object.entries(parameters).reduce(
       (parsed, [key, value]) => Object.assign(
         parsed,
@@ -11,8 +19,4 @@ export function applyParameters (element, defaults) {
       {}
     )
     : parameters
-
-  console.debug('parameters:', parsedParameters)
-
-  Object.assign(element, defaults, parsedParameters)
 }

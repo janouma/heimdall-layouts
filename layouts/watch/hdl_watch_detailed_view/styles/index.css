@@ -114,38 +114,24 @@ input:focus::placeholder, textarea:focus::placeholder {
       .playlist-field {
         --font-size-points: 2;
       }
+
+      /* For Safari and Chrome */
     }
-
-      .form[\:has\(input\[type\%3D\%22text\%22\]\:focus\:-moz-placeholder-shown\)] {
-        .save-button,
-        > :last-child {
-          visibility: hidden;
-          opacity: 0;
-        }
+      .form[\:has\(input\[type\%3D\%22text\%22\]\:focus\:-moz-placeholder-shown\%20~\%20.completion\)] .save-button {
+        visibility: hidden;
+        opacity: 0;
       }
-
-      .form[\:has\(input\[type\%3D\%22text\%22\]\:focus\:placeholder-shown\)] {
-        .save-button,
-        > :last-child {
-          visibility: hidden;
-          opacity: 0;
-        }
+      .form[\:has\(input\[type\%3D\%22text\%22\]\:focus\:placeholder-shown\%20~\%20.completion\)] .save-button {
+        visibility: hidden;
+        opacity: 0;
       }
-
-      .form:has(input[type="text"]:focus:-moz-placeholder-shown) {
-        .save-button,
-        > :last-child {
-          visibility: hidden;
-          opacity: 0;
-        }
+      .form:has(input[type="text"]:focus:-moz-placeholder-shown ~ .completion) .save-button {
+        visibility: hidden;
+        opacity: 0;
       }
-
-      .form:has(input[type="text"]:focus:placeholder-shown) {
-        .save-button,
-        > :last-child {
-          visibility: hidden;
-          opacity: 0;
-        }
+      .form:has(input[type="text"]:focus:placeholder-shown ~ .completion) .save-button {
+        visibility: hidden;
+        opacity: 0;
       }
 
     .form {
@@ -165,6 +151,27 @@ input:focus::placeholder, textarea:focus::placeholder {
     }
 }
   }
+
+/* For Firefox */
+
+@media (max-width: 450px) {
+  .form[\:has\(input\[type\%3D\%22text\%22\]\:focus\:-moz-placeholder-shown\%20~\%20.completion\)] .save-button {
+    visibility: hidden;
+    opacity: 0;
+  }
+  .form[\:has\(input\[type\%3D\%22text\%22\]\:focus\:placeholder-shown\%20~\%20.completion\)] .save-button {
+    visibility: hidden;
+    opacity: 0;
+  }
+  .form:has(input[type="text"]:focus:-moz-placeholder-shown ~ .completion) .save-button {
+    visibility: hidden;
+    opacity: 0;
+  }
+  .form:has(input[type="text"]:focus:placeholder-shown ~ .completion) .save-button {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
 
 .fetching,
 .pending {
@@ -401,6 +408,7 @@ button {
 }
 
 .tag::before {
+    content: "";
     height: 0.8em;
     aspect-ratio: 1;
     margin-left: 0.125em;
@@ -429,10 +437,6 @@ button {
 .tag.active::before {
       background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/check.svg) no-repeat center / contain;
     }
-
-.tag::before {
-    content: "";
-  }
 
 .tag.failure > .status {
     opacity: 100%;

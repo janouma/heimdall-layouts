@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import * as td from 'testdouble'
-import { onLongTouch } from '../../../lib/events.js'
+import { onLongTouch } from '../../../.lib/events.js'
 
 test.group('#onLongTouch', () => {
   const nativeSetTimeout = setTimeout
