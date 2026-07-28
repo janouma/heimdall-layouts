@@ -8,12 +8,12 @@ test.group('#createValidator', group => {
 
   group.each.setup(async () => {
     await td.replaceEsm(
-      '../../../lib/environment.js',
+      '../../../.lib/environment.js',
       { isDevelopment: true }
     );
 
     ({ createValidator } =
-      await import(`../../../lib/validation.js?t=${Date.now()}.${performance.now()}`))
+      await import(`../../../.lib/validation.js?t=${Date.now()}.${performance.now()}`))
   })
 
   group.each.teardown(() => {
@@ -66,10 +66,10 @@ test.group('#createValidator', group => {
     const validate = createValidator('layout/component')
     expect(() => validate()).not.toThrow()
   }).setup(async () => {
-    await td.replaceEsm('../../../lib/environment.js', { isDevelopment: false });
+    await td.replaceEsm('../../../.lib/environment.js', { isDevelopment: false });
 
     ({ createValidator } =
-      await import(`../../../lib/validation.js?t=${Date.now()}.${performance.now()}`))
+      await import(`../../../.lib/validation.js?t=${Date.now()}.${performance.now()}`))
   })
 
   test('path argument validation', ({ expect }) => {

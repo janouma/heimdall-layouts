@@ -62,22 +62,17 @@ const DetailedView = juris.createWebComponent(
                     })),
 
                     seasonsCount: joi.number(),
-                    ended: joi.boolean(),
-                    statusUnknown: joi.boolean()
+                    ended: joi.boolean()
                   }).allow(null).unknown()
                 }).optional().allow(null).unknown()
               )
             )
 
-            const setContent = itemProp => setState(
-              'content',
-              itemProp
-                ? createContent(itemProp)
+            setState({
+              content: item
+                ? createContent(item)
                 : { title: getLayoutState('search.text'), tags: defaultTags }
-            )
-
-            subscriptions.push(subscribe('item', setContent))
-            setContent(item)
+            })
 
             const searchMode = getLayoutState('searchMode')
 
@@ -122,23 +117,13 @@ const DetailedView = juris.createWebComponent(
             if ($id) {
               const itemType = getLayoutState('itemType')
 
-              const playlistByItemId =
+              const playlistByItemId = Object.fromEntries(
                 Object.entries(getLayoutState('config.playlists', {}))
-                  .reduce(
-                    (map, [playlist, categories]) => {
-                      const categoryItemIds = categories?.[itemType]
-
-                      return categoryItemIds?.length > 0
-                        ? Object.assign(
-                          map,
-
-                          ...categoryItemIds
-                            ?.map(id => ({ [id]: playlist }))
-                        )
-                        : map
-                    },
-                    {}
+                  .flatMap(
+                    ([playlist, categories]) =>
+                      categories?.[itemType]?.map(id => [id, playlist]) || []
                   )
+              )
 
               const computedPlaylist = playlistByItemId[$id] || ''
 
@@ -828,11 +813,11 @@ const DetailedView = juris.createWebComponent(
                                                         ? 'default'
                                                         : undefined,
 
-                                                      onclick: () => setPlaylist(playlist),
-
                                                       children: {
                                                         button: {
                                                           class: 'animated',
+                                                          disabled: () => !canEdit(),
+                                                          onclick: () => setPlaylist(playlist),
                                                           textContent: playlist
                                                         }
                                                       }

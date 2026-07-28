@@ -835,9 +835,7 @@ test('body loading existing reminded', async ({ page, lastItems, config }) => {
     })])
 })
 
-test('reminded from more than 20 items', async ({ page, lastItems, config, browserName }) => {
-  test.skip(browserName === 'webkit', 'too flacky on webkit')
-
+test('reminded from more than 20 items', async ({ page, lastItems, config }) => {
   const lastItemsIndexes = lastItems.map((_, index) => index)
   const availableItemsIndexes = [...lastItemsIndexes, ...lastItemsIndexes, ...lastItemsIndexes]
 
@@ -873,22 +871,79 @@ test('reminded from more than 20 items', async ({ page, lastItems, config, brows
 
   const remindedLoad = Promise.all([
     page.waitForRequest(
-      request =>
-        request.url().endsWith('/api/find-items') &&
-          request.postData() === '{"includeDraft":true,"offset":2}'
+      request => {
+        if (request.url().endsWith('/api/find-items')) {
+          const postData = JSON.parse(request.postData())
+
+          try {
+            expect(postData).toEqual({ includeDraft: true, offset: 2 })
+            return true
+          } catch {
+            return false
+          }
+        }
+      }
     ),
 
     page.waitForRequest(request => {
       if (request.url().endsWith('/api/set-config/dashboard')) {
         const postData = JSON.parse(request.postData())
 
-        return JSON.stringify(postData.reminded.items) === '[{"$id":"nano-id","title":"nano ID at evil martians","url":"https://evilmartians.com/opensource/nanoid","snapshot":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_screenshot.png","icon":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_icon.ico"},{"$id":"neutralino-id","title":"build lightweight cross-platform desktop application","url":"https://neutralino.js.org","snapshot":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/neutralino_screenshot.png","icon":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/neutralino_icon.png"},{"$id":"nano-id","title":"nano ID at evil martians","url":"https://evilmartians.com/opensource/nanoid","snapshot":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_screenshot.png","icon":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_icon.ico"},{"$id":"vivliostyle-id","title":"vivliostyle — enjoy css type setting!","url":"https://vivliostyle.org","snapshot":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/vivliostyle_screenshot.png"},{"$id":"detect-firefox-css-id","title":"detect firefox in CSS","type":"css"},{"$id":"bliss-js-id","title":"bliss.js — heavenly javascript","url":"https://blissfuljs.com/index.html"},{"$id":"vivliostyle-id","title":"vivliostyle — enjoy css type setting!","url":"https://vivliostyle.org","snapshot":"/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/vivliostyle_screenshot.png"}]'
+        try {
+          expect(postData.reminded.items).toEqual([
+            {
+              $id: 'nano-id',
+              title: 'nano ID at evil martians',
+              url: 'https://evilmartians.com/opensource/nanoid',
+              snapshot: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_screenshot.png',
+              icon: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_icon.ico'
+            },
+            {
+              $id: 'neutralino-id',
+              title: 'build lightweight cross-platform desktop application',
+              url: 'https://neutralino.js.org',
+              snapshot: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/neutralino_screenshot.png',
+              icon: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/neutralino_icon.png'
+            },
+            {
+              $id: 'nano-id',
+              title: 'nano ID at evil martians',
+              url: 'https://evilmartians.com/opensource/nanoid',
+              snapshot: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_screenshot.png',
+              icon: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/nanoid_icon.ico'
+            },
+            {
+              $id: 'vivliostyle-id',
+              title: 'vivliostyle — enjoy css type setting!',
+              url: 'https://vivliostyle.org',
+              snapshot: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/vivliostyle_screenshot.png'
+            },
+            {
+              $id: 'detect-firefox-css-id',
+              title: 'detect firefox in CSS',
+              type: 'css'
+            },
+            {
+              $id: 'bliss-js-id',
+              title: 'bliss.js — heavenly javascript',
+              url: 'https://blissfuljs.com/index.html'
+            },
+            {
+              $id: 'vivliostyle-id',
+              title: 'vivliostyle — enjoy css type setting!',
+              url: 'https://vivliostyle.org',
+              snapshot: '/heimdall-layouts/tests/suites/dashboard/hdl_dashboard_widget/views/assets/images/vivliostyle_screenshot.png'
+            }
+          ])
+          return true
+        } catch {
+          return false
+        }
       }
     })
   ])
 
-  await page.goto(getComponentUrl())
-  await page.evaluate(() => window.mockMathRandom(0.7, 0.2, 0.999999, 0.9, 0.5, 0.6))
+  await page.goto(getComponentUrl({ params: { randomValues: [0.7, 0.2, 0.999999, 0.9, 0.5, 0.6] } }))
   return remindedLoad
 })
 

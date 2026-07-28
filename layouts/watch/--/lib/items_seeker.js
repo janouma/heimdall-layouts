@@ -97,9 +97,22 @@ function convertToItem ({
 
   let duration = runtime
 
+  const releaseDateObj = dateUtil(releaseDate)
+  const tvReleaseDateObj = dateUtil(tvReleaseDate)
+
   if (!duration && tvReleaseDate && tvLastAirDate) {
     try {
-      duration = dateUtil(tvLastAirDate).diff(dateUtil(tvReleaseDate), 'minutes')
+      const tvLastAirDateObj = dateUtil(tvLastAirDate)
+
+      if (!tvLastAirDateObj.isValid()) {
+        throw new Error('property `last_air_date` has the wrong date format: ' + tvLastAirDate)
+      }
+
+      if (!tvReleaseDateObj.isValid()) {
+        throw new Error('property `first_air_date` has the wrong date format: ' + tvReleaseDate)
+      }
+
+      duration = tvLastAirDateObj.diff(tvReleaseDateObj, 'minutes')
     } catch (error) {
       log.error('unable to compute duration from data', { tvLastAirDate, tvReleaseDate })
     }
@@ -118,7 +131,7 @@ function convertToItem ({
   }
 
   return {
-    url: `${TMDB_WEB_URL}/${mappedType}/${externalId}`,
+    url: `${TMDB_WEB_URL}/${mappedType}/${encodeURIComponent(externalId)}`,
     snapshot: snapshot && `${imagesBaseUrl}w500/${snapshot}`,
     title: title || tvName,
 
@@ -128,8 +141,12 @@ function convertToItem ({
       // overview can be blank
       overview: overview || undefined,
       score,
+
       // date can be blank
-      date: releaseDate || tvReleaseDate || undefined,
+      date: (releaseDateObj.isValid() && releaseDate) ||
+        (tvReleaseDateObj.isValid() && tvReleaseDate) ||
+        undefined,
+
       duration,
       genres: filteredGenres?.length > 0 ? filteredGenres : undefined,
       directors,

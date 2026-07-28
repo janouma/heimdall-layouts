@@ -46,7 +46,8 @@ for (const template of [
     String(readFileSync(template)),
     {
       __LAYOUT_FOLDER__: layoutFolder,
-      __COMPONENT_FOLDER__: componentFolder
+      __COMPONENT_FOLDER__: componentFolder,
+      __COMPONENT_NAME__: componentName
     }
   )
 

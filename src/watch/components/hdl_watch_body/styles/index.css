@@ -330,7 +330,9 @@ footer {
   translate: -50% 0;
   background-color: rgba(var(--deepspace), 62.5%);
   border-radius: 100px;
-  text-wrap: nowrap;
+  max-width: calc(100% - 4em);
+  text-align: center;
+  width: max-content;
 
   > img {
     height: var(--font-size);

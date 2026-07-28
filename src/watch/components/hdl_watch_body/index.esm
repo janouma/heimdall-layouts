@@ -92,10 +92,12 @@ const WatchBody = juris.createWebComponent(
 
             if (isTouchDevice) {
               const postersGridIntersectionObserver = new IntersectionObserver(
-                ([{ intersectionRect }]) => {
-                  log.debug('onMount/postersGridObserver', { intersectionRect })
-                  setState('postersGridVisible', intersectionRect.height >= 100)
-                }
+                ([{ isIntersecting }]) => {
+                  log.debug('onMount/postersGridObserver', { isIntersecting })
+                  setState('postersGridVisible', isIntersecting)
+                },
+
+                { root: element, rootMargin: '0px 0px -100px 0px' }
               )
 
               postersGridIntersectionObserver.observe(postersGrid)
@@ -155,8 +157,8 @@ const WatchBody = juris.createWebComponent(
 
             function loadConfig () {
               return getConfig({ layout: 'watch' })
-                .then(config => {
-                  setLayoutState('config', config || {})
+                .then((config = {}) => {
+                  setLayoutState({ config })
                   return true
                 })
                 .catch(error => {
@@ -297,9 +299,17 @@ const WatchBody = juris.createWebComponent(
               const searchMax = getLayoutState('search.max')
               const isLoadingMore = searchMax && searchMax !== previousSearchMax
 
+              // the transition needs the host styled `display: block`: chromium
+              // refuses scoped view transitions on inline elements, and the
+              // stylesheet loads asynchronously
               // FIXME: remove `&& !isTouchDevice` condition when
               // HTMLElement.startViewTransition() is available on Safari
-              if (isLoadingMore && element.startViewTransition && !isTouchDevice) {
+              if (
+                isLoadingMore &&
+                getState('styleLoaded') &&
+                element.startViewTransition &&
+                !isTouchDevice
+              ) {
                 element.startViewTransition(() => setState('grid.items', items))
               } else {
                 setState('grid.items', items)

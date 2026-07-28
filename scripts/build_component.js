@@ -39,7 +39,7 @@ if (compileResult.code > 0) {
 }
 
 const filesWithParams = shell
-  .exec('grep -Rl "#{.*}" layouts', { silent: true })
+  .exec('grep -Rl "#{.*}" layouts .lib', { silent: true })
   .stdout
   .trim()
   .split('\n')

@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import * as td from 'testdouble'
-import { getConfig } from '../../../lib/config.js'
+import { getConfig } from '../../../.lib/config.js'
 
 test.group('#getConfig', group => {
   const nativeFetch = fetch

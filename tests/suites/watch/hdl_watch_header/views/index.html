@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/watch/hdl_watch_header/index.js"></script>
+    <script type="module">
+      import { applyParameters } from '../../../../helpers/parameters.js'
+      import * as layoutContext from '../../../../helpers/layout_context.js'
+
+      const component = document.createElement('hdl-watch-header')
+      applyParameters(component, { layoutContext })
+      document.body.appendChild(component)
+    </script>
+
+    <style>
+      body {
+        --main-header-height: 3.93em;
+        --main-header-backdrop-filter: blur(0.4em);
+
+        background-color: rgb(var(--space));
+        display: flex;
+        flex-wrap: wrap;
+
+        background-image: repeating-linear-gradient(
+          110deg,
+          /* Transparent gap (3px) */
+          transparent 0,
+          transparent 4px,
+
+          /* One rain line */
+          white 4px,
+          white 6px,
+
+          /* Next gap */
+          transparent 6px,
+          transparent 10px
+        );
+
+        /* Large box so each line spans the whole viewport */
+        background-size: 150vmax 150vmax;
+      }
+    </style>
+  </head>
+  <body></body>
+</html>

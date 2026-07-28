@@ -34,6 +34,8 @@ html,
 }
 
 .controls {
+  --padding-inline: 0;
+
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -48,7 +50,11 @@ html,
   }
 
   > :first-child {
-    margin-left: 0.375em;
+    margin-left: calc(0.375em + var(--padding-inline));
+  }
+
+  > :last-child {
+    margin-right: var(--padding-inline);
   }
 }
 
@@ -67,23 +73,18 @@ html,
 @media (min-width: 813px) {
 
 .controls {
-    padding-left: 1.3425em;
-    padding-right: 1.3425em
+    --padding-inline: 1.3425em;
+
+    > :first-child {
+      margin-left: var(--padding-inline);
+    }
 }
   }
 
 @media (min-width: 1025px) {
 
 .controls {
-    flex: revert;
-
-    > :first-child {
-      margin-left: revert;
-    }
-
-    > :last-child {
-      margin-right: 0.5em;
-    }
+    flex: revert
 }
   }
 

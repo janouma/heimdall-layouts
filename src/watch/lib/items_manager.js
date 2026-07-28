@@ -57,7 +57,7 @@ juris.registerHeadlessComponent('ItemsManager', function ItemsManager (
         const searchByItemType = cleanSearch({
           ...search,
           tags: [itemType],
-          text: `${search.text || ''} "${WATCH_TAG}"`.trim()
+          text: `${search?.text || ''} "${WATCH_TAG}"`.trim()
         })
 
         if (selectedPlaylist && !playlistEntries?.length) {

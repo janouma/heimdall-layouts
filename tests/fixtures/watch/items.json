@@ -35,7 +35,13 @@
     "$id": "hilda",
     "title": "Hilda et le roi de la montagne",
     "url": "https://tmdb/hilda",
-    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/hilda.webp"
+    "snapshot": "/heimdall-layouts/tests/suites/watch/main/views/assets/images/hilda.webp",
+    "meta": {
+      "externalId": 82816,
+      "overview": "A fearless blue-haired girl leaves her home in a vast magical wilderness for the city of Trolberg.",
+      "score": 8.6,
+      "date": "2018-09-21"
+    }
   },
   {
     "$id": "blow_out",
