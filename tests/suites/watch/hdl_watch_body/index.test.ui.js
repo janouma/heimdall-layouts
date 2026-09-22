@@ -1,3 +1,4 @@
+import '../../../helpers/polyfill.js'
 import { test, expect } from '../../../helpers/playwright.js'
 import { getComponentHelpers } from '../../../helpers/components.js'
 import fixtureItems from '../../../fixtures/watch/items.json' with { type: 'json' }
@@ -143,6 +144,38 @@ test('whole component display', async ({ page }) => {
   await page.goto(getComponentUrl({ params: { layoutState: findModeState } }))
 
   return expect(page).toHaveScreenshot(getScreenshotPath('full-height'))
+})
+
+test('warm mount display', async ({ page }) => {
+  // the mount search is held back, leaving the grid to stand on the state alone
+  const { promise: searchHeld, resolve: releaseSearch } = Promise.withResolvers()
+
+  await page.route('/api/get-config/watch', route => route.fulfill({ json: config }))
+
+  await page.route('/api/find-items', async route => {
+    await searchHeld
+    return route.fulfill({ json: fixtureItems })
+  })
+
+  await page.route('/api/count-items', route => route.fulfill({ json: fixtureItems.length }))
+  await page.route('/api/lookup-items', route => route.fulfill({ json: lookedUpItems }))
+
+  // results a previous search left behind, the way a layout comes back to
+  await page.goto(getComponentUrl({
+    params: {
+      layoutState: { ...findModeState, items: fewItems, itemsCount: fixtureItems.length }
+    }
+  }))
+
+  // the grid holds them while the search is still out, rather than standing
+  // empty until it answers
+  await expect(page).toHaveScreenshot(getScreenshotPath('warm-mount'))
+
+  releaseSearch()
+
+  // the answer takes their place, down to the very rendering the find mode
+  // mount settles on
+  return expect(page).toHaveScreenshot(getScreenshotPath('find-mode'))
 })
 
 test('add mode display', async ({ page }) => {
@@ -466,6 +499,45 @@ test('default playlist poster selection', async ({ page }) => {
   expect(findPayloads.map(({ max }) => max)).toEqual([search.max, 50])
 })
 
+test('playlist selection from a full sample', async ({ page }) => {
+  const findPayloads = []
+  const lookupPayloads = []
+
+  await page.route(
+    '/api/get-config/watch',
+    route => route.fulfill({ json: { playlists: { 'watch sequence': { movie: shortPlaylist } } } })
+  )
+
+  // the sample carries every playlist entry this time
+  await page.route('/api/find-items', route => {
+    const payload = route.request().postDataJSON()
+    findPayloads.push(payload)
+
+    return route.fulfill({ json: fixtureItems })
+  })
+
+  await page.route('/api/count-items', route => route.fulfill({ json: fixtureItems.length }))
+
+  await page.route('/api/lookup-items', route => {
+    lookupPayloads.push(route.request().postDataJSON())
+    return route.fulfill({ json: [] })
+  })
+
+  await page.setViewportSize({ width: 1650, height: 720 })
+  await page.goto(getComponentUrl({ params: { layoutState: findModeState } }))
+
+  // the playlist first, in its own order, then the random fill drawn from the
+  // very sample the entries came from
+  await expect(page.locator('.hero-carousel'))
+    .toHaveScreenshot(getScreenshotPath('sample-only-selection'))
+
+  // the sample leaves no entry behind: there is nothing left to look up
+  expect(lookupPayloads).toEqual([])
+
+  // the grid search first, then the sample one
+  expect(findPayloads.map(({ max }) => max)).toEqual([search.max, 50])
+})
+
 test('random poster selection', async ({ page }) => {
   const findPayloads = []
   const lookupPayloads = []
@@ -562,6 +634,50 @@ test('random poster selection exhaustion', async ({ page }) => {
     .toHaveScreenshot(getScreenshotPath('exhausted-selection'))
 })
 
+test('random selection without sample', async ({ page }) => {
+  const findPayloads = []
+  const lookupPayloads = []
+
+  // a playlist held for the other item type only: the sample is all the
+  // selection has to draw from
+  await page.route(
+    '/api/get-config/watch',
+    route => route.fulfill({
+      json: { playlists: { 'watch sequence': { 'tv show': rewatchPlaylist } } }
+    })
+  )
+
+  // the sample search fails where the grid one succeeds
+  await page.route('/api/find-items', route => {
+    const payload = route.request().postDataJSON()
+    findPayloads.push(payload)
+
+    return payload.max === search.max
+      ? route.fulfill({ json: fixtureItems })
+      : route.fulfill({ status: 500 })
+  })
+
+  await page.route('/api/count-items', route => route.fulfill({ json: fixtureItems.length }))
+
+  await page.route('/api/lookup-items', route => {
+    lookupPayloads.push(route.request().postDataJSON())
+    return route.fulfill({ json: lookedUpItems })
+  })
+
+  await page.setViewportSize({ width: 1650, height: 720 })
+  await page.goto(getComponentUrl({ params: { layoutState: findModeState } }))
+
+  // nothing to draw from leaves the carousel on its placeholders, the very
+  // rendering a failed selection settles on
+  await expect(page).toHaveScreenshot(getScreenshotPath('placeholder-selection'))
+
+  // the sample was asked for and failed, rather than skipped
+  expect(findPayloads.map(({ max }) => max)).toEqual([search.max, 50])
+
+  // nothing to look up without a playlist for the item type
+  expect(lookupPayloads).toEqual([])
+})
+
 test('playlist selection without sample', async ({ page }) => {
   const findPayloads = []
   const lookupPayloads = []
@@ -638,6 +754,39 @@ test('poster selection failure', async ({ page }) => {
 
   // no sample fetched to make up for the failure: the selection is left empty
   // rather than quietly randomised
+  expect(findPayloads.map(({ max }) => max)).toEqual([search.max])
+})
+
+test('config load failure', async ({ page }) => {
+  const findPayloads = []
+  const lookupPayloads = []
+
+  // the config never makes it to the state, leaving the selection waiting on
+  // it for good
+  await page.route('/api/get-config/watch', route => route.fulfill({ status: 500 }))
+
+  await page.route('/api/find-items', route => {
+    findPayloads.push(route.request().postDataJSON())
+    return route.fulfill({ json: fixtureItems })
+  })
+
+  await page.route('/api/count-items', route => route.fulfill({ json: fixtureItems.length }))
+
+  await page.route('/api/lookup-items', route => {
+    lookupPayloads.push(route.request().postDataJSON())
+    return route.fulfill({ json: lookedUpItems })
+  })
+
+  await page.setViewportSize({ width: 1650, height: 720 })
+  await page.goto(getComponentUrl({ params: { layoutState: findModeState } }))
+
+  // the very rendering a failed selection settles on, reached without a single
+  // request being made for it
+  await expect(page).toHaveScreenshot(getScreenshotPath('placeholder-selection'))
+
+  // the grid searches on its own, while the carousel is left waiting: neither
+  // the playlist nor a sample is ever asked for
+  expect(lookupPayloads).toEqual([])
   expect(findPayloads.map(({ max }) => max)).toEqual([search.max])
 })
 
@@ -1053,7 +1202,13 @@ test('config update sync', async ({ page }) => {
   // rendering switching to the other type settles on
   await expect(page).toHaveScreenshot(getScreenshotPath('tv-show-mode'))
 
-  // the config is fetched anew rather than taken from the state
+  await notify(page, { scope: 'dashboard', type: 'configUpdate' })
+
+  // an update from another layout leaves this one where it stood
+  await expect(page).toHaveScreenshot(getScreenshotPath('tv-show-mode'))
+
+  // the config is fetched anew rather than taken from the state, and the
+  // update turned away never got that far
   expect(configRequests).toHaveLength(2)
 
   // three searches for one update: the mount one, the one the unconditional
@@ -1063,6 +1218,51 @@ test('config update sync', async ({ page }) => {
 
   // the carousel reloads from the config just brought in
   expect(lookupPayloads).toEqual([playlist, tvShowPlaylist])
+})
+
+test('config update failure', async ({ page }) => {
+  const configRequests = []
+  const findPayloads = []
+  const lookupPayloads = []
+
+  // the update finds the config out of reach
+  let reachable = true
+
+  await page.route('/api/get-config/watch', route => {
+    configRequests.push(route.request().url())
+    return reachable ? route.fulfill({ json: config }) : route.fulfill({ status: 500 })
+  })
+
+  await page.route('/api/find-items', route => {
+    findPayloads.push(route.request().postDataJSON())
+    return route.fulfill({ json: fixtureItems })
+  })
+
+  await page.route('/api/count-items', route => route.fulfill({ json: fixtureItems.length }))
+
+  await page.route('/api/lookup-items', route => {
+    lookupPayloads.push(route.request().postDataJSON())
+    return route.fulfill({ json: lookedUpItems })
+  })
+
+  await page.goto(getComponentUrl({ params: { layoutState: findModeState } }))
+
+  // the very rendering the find mode mount settles on
+  await expect(page).toHaveScreenshot(getScreenshotPath('find-mode'))
+
+  reachable = false
+  await notify(page, { scope: 'watch', type: 'configUpdate' })
+
+  // a config that cannot be reloaded holds the whole sync back
+  await expect(page).toHaveScreenshot(getScreenshotPath('find-mode'))
+
+  // the reload was attempted, and gave up on the rest of the sync
+  expect(configRequests).toHaveLength(2)
+
+  // both left at what the mount issued: neither the results nor the selection
+  // were touched
+  expect(findPayloads).toHaveLength(1)
+  expect(lookupPayloads).toEqual([playlist])
 })
 
 test('selected playlist reset', async ({ page }) => {

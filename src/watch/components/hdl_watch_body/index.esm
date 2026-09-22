@@ -280,7 +280,8 @@ const WatchBody = juris.createWebComponent(
                   postersSelection = []
                 }
 
-                if (items.length > 0 && postersSelection.length < CAROUSEL_SIZE) {
+                // Second operand branch is backed by line 249
+                if (items.length > 0/* && postersSelection.length < CAROUSEL_SIZE */) {
                   postersSelection
                     .push(...selectRandomItems(items, CAROUSEL_SIZE - postersSelection.length, postersSelection))
                 }

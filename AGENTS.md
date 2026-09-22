@@ -34,6 +34,9 @@ Implement one `test.fixme` at a time, replacing it and removing its description 
 Validate with two scoped runs, `npm run test:ui -- <suite dir> -g "<test name>" 2>&1`: the first
 writes the new goldens, the second compares them. Review every new golden in between.
 
+Ask for approval before running a full suite: scoped runs are the default, whatever the change
+reaches. Say which tests a change could move and let me decide, rather than running them.
+
 Prefer a screenshot over fine grained assertions when the behaviour under test is rendered —
 button counts, placeholder text, active or locked styling — and keep functional assertions for
 what a capture cannot prove. Reuse an existing golden when a new state should render
