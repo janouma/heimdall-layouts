@@ -7,15 +7,14 @@
     <script type="module" src="../../../../../layouts/${__LAYOUT_FOLDER__}/${__COMPONENT_FOLDER__}/index.js"></script>
     <script type="module">
       import { applyParameters } from '../../../../helpers/parameters.js'
-      ${__COMPONENT_FOLDER__ === 'body' ? "import * as layoutContext from '../../../../helpers/layout_context.js'" : ''}
-
+      ${['body', 'header'].includes(__COMPONENT_FOLDER__) ? "import * as layoutContext from '../../../../helpers/layout_context.js'" + String.fromCharCode(0x0A) : ''}
       const component = document.createElement('${__COMPONENT_FOLDER__.replaceAll("_", "-")}')
 
       applyParameters(
         component,
         {
           ${
-            __COMPONENT_FOLDER__ === 'body'
+            ['body', 'header'].includes(__COMPONENT_FOLDER__)
             ? 'layoutContext'
             : "title: '" + __COMPONENT_FOLDER__.replaceAll("_", " ") + "'"
           }

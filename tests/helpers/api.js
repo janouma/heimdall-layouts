@@ -15,15 +15,36 @@ export function unmockApiResponse ({ url } = {}) {
   }
 }
 
-function spyFetch (url, ...args) {
-  const mockResponse = responses[url]
+async function spyFetch (url, ...args) {
+  const mockResponse = Object.entries(responses).find(
+    ([mockedUrl]) => (
+      mockedUrl.startsWith('/^') && mockedUrl.endsWith('$/') && url.match(new RegExp(mockedUrl.slice(1, -1)))
+    ) || mockedUrl === url
+  )?.[1]
 
   if (mockResponse) {
     console.log('fetch intercepted:', { url, args })
+    let payload
+
+    try {
+      await (payload = getPayload(mockResponse, url, ...args))
+    } catch (error) {
+      payload = Object.create(error)
+      payload.httpStatus = error.httpStatus || 500
+    }
+
+    if (!(payload instanceof Error)) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        [mockResponse.type]: () => payload
+      })
+    }
 
     return Promise.resolve({
-      ok: true,
-      [mockResponse.type]: () => Promise.resolve(getPayload(mockResponse, url, ...args))
+      ok: false,
+      status: payload.httpStatus,
+      text: () => Promise.resolve(payload.message)
     })
   }
 
@@ -31,7 +52,9 @@ function spyFetch (url, ...args) {
 }
 
 function getPayload ({ payload }, ...args) {
-  return typeof payload === 'function' ? payload(...args) : payload
+  return typeof payload === 'function'
+    ? Promise.try(payload, ...args)
+    : Promise.resolve(payload)
 }
 
 let nextRandomNumber

@@ -1,30 +1,37 @@
 import shell from 'shelljs'
 import createSimpleGit from 'simple-git'
-
-import {
-  join,
-  resolve as resolvePath,
-  sep as slash
-} from 'path'
+import { resolve as resolvePath, sep as slash, join } from 'path'
 
 build()
 
 async function build () {
   try {
-    const sources = process.argv.slice(2).map(source => resolvePath(source))
-    const sourceDir = resolvePath('src')
-    const layoutsFiles = sources.filter(source => source.startsWith(sourceDir + slash))
-    const layoutDirMatcher = new RegExp(`^${sourceDir}${slash}(.+?)${slash}.*$`)
-    const layouts = dedup(layoutsFiles.map(file => file.replace(layoutDirMatcher, '$1')))
+    {
+      const cmdResults = shell.exec('npm run build:shared')
 
-    process.stdout.write(`sources:\n  ${sources.join('\n  ')}\n`)
-    process.stdout.write(`\nlayouts:\n  ${layouts.join('\n  ')}\n`)
-
-    for (const layout of layouts) {
-      shell.exec(`npm run build:layout -- name=${layout}`)
+      if (cmdResults.code > 0) {
+        throw new Error('failed to build shared components')
+      }
     }
 
     const git = createSimpleGit()
+
+    const allLayouts = shell.ls('-d', 'src/*/')
+      .stdout.trim().split('\n')
+      .map(dir => dir.replaceAll(/^src\/|\/$/g, ''))
+
+    const layouts = await getTracked({ git, dirs: allLayouts, parent: 'src' })
+
+    process.stdout.write(`\nlayouts:\n  ${layouts.join('\n  ')}\n`)
+
+    for (const layout of layouts) {
+      const cmdResults = shell.exec(`npm run build:layout -- name=${layout}`)
+
+      if (cmdResults.code > 0) {
+        throw new Error('failed to build layout ' + layout)
+      }
+    }
+
     const status = await git.status()
     const newlyDeleted = status.deleted.filter(file => !status.staged.includes(file))
 
@@ -37,18 +44,17 @@ async function build () {
     ]))
       .map(file => resolvePath(file))
 
-    const destinationDir = resolvePath('layouts')
+    const builtDirs = ['layouts', '.lib', 'packages', 'shared_components']
+      .map(dir => resolvePath(dir))
 
-    for (const layout of layouts) {
-      for (const file of newFiles) {
-        if (file.startsWith(join(destinationDir, layout) + slash)) {
-          process.stdout.write(`staging file "${file}"\n`)
-          await git.add(file)
-        }
+    for (const file of newFiles) {
+      if (builtDirs.some(dir => file.startsWith(dir + slash))) {
+        process.stdout.write(`staging file "${file}"\n`)
+        await git.add(file)
       }
     }
 
-    const layoutsDescriptor = join(destinationDir, 'layouts.json')
+    const layoutsDescriptor = resolvePath('layouts.json')
 
     if (newFiles.includes(layoutsDescriptor)) {
       process.stdout.write(`staging file "${layoutsDescriptor}"\n`)
@@ -63,6 +69,11 @@ async function build () {
   }
 }
 
-function dedup (list) {
-  return Array.from(new Set(list))
+async function getTracked ({ git, dirs, parent }) {
+  const filtered = dirs.map(async dir => {
+    const result = await git.raw(['ls-files', join(parent, dir)])
+    return result.trim().length > 0 && dir
+  })
+
+  return (await Promise.all(filtered)).filter(dir => Boolean(dir))
 }

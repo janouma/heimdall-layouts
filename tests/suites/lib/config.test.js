@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import * as td from 'testdouble'
-import { getConfig } from '../../../lib/config.js'
+import { getConfig } from '../../../.lib/config.js'
 
 test.group('#getConfig', group => {
   const nativeFetch = fetch
@@ -77,7 +77,7 @@ test.group('#getConfig', group => {
     }
 
     td.when(fetch('/api/set-config/dashboard', td.matchers.contains(upToDateConfigPayload)))
-      .thenResolve()
+      .thenResolve({ ok: true })
 
     td.when(
       fetch(
@@ -85,7 +85,7 @@ test.group('#getConfig', group => {
         td.matchers.not(upToDateConfigPayload)
       )
     )
-      .thenDo((url, options) => {
+      .thenDo((_, options) => {
         console.debug('unexpected fetch options:\n', JSON.stringify(options, undefined, 2))
         throw new Error('Unexpected fetch options')
       })

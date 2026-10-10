@@ -106,8 +106,10 @@ npm run startd
 Then start the watch process
 
 ```bash
-npm run watch:component -- name=<layout name>/<component name>
+npm run watch -- name=<layout name>[/<component name>]
 ```
+
+When the component name is omited, the whole layout gets rebuild on sources change.
 
 ### The `layoutContext` api
 
@@ -327,16 +329,15 @@ Remove application level event listener
       <td>subscribe</td>
       <td>Add listener to server event</td>
       <td>
-        path – string<br/>
-        listener – function<br/>
-        error logger – function
+        event – string<br/>
+        listener – function
       </td>
     </tr>
     <tr>
       <td>unsubscribe</td>
       <td>Remove listener to server event</td>
       <td>
-        path – string<br/>
+        event – string<br/>
         listener – function
       </td>
     </tr>

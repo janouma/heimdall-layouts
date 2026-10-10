@@ -1,0 +1,33 @@
+import messages from '../assets/messages.json' with { type: 'json' }
+
+export default class ${__BODY_COMPONENT_CLASS_NAME__} extends HTMLElement {
+  #layoutContext
+
+  set layoutContext(layoutContext) {
+    this.#layoutContext = layoutContext
+  }
+
+  get layoutContext () {
+    return this.#layoutContext
+  }
+
+  constructor () {
+    super()
+    this.attachShadow({ mode: 'open' })
+  }
+
+  connectedCallback () {
+    this.render()
+  }
+
+  attributeChangedCallback () {
+    this.render()
+  }
+
+  render () {
+    this.shadowRoot.innerHTML = `
+      <link rel="stylesheet" href="\${import.meta.resolve('./styles/main.css')}"/>
+      <h1>Hello \${messages.body.title}!</h1>
+    `
+  }
+}

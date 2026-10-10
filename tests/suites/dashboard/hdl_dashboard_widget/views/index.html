@@ -24,13 +24,12 @@
       import { isTestEnv } from '../../../../helpers/env.js'
       import { mockSetTimeout } from '../../../../helpers/api.js'
       import { applyParameters } from '../../../../helpers/parameters.js'
+      import lastItems from '../../../../fixtures/dashboard/last_items.json' with { type: 'json' }
 
       if (isTestEnv()) {
         mockSetTimeout()
       }
 
-      const response = await fetch('../../../../fixtures/dashboard/last_items.json')
-      const lastItems = await response.json()
       const widget = document.createElement('hdl-dashboard-widget')
 
       widget.addEventListener('show-item-content', ({ detail: item }) => console.debug('show content for item:', item))

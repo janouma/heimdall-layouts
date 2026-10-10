@@ -1,8 +1,7 @@
 const layoutFolderPattern = /^([a-z0-9]+)(_[a-z0-9]+)*$/
 
 async function init () {
-  const response = await fetch('layouts.json')
-  const layouts = await response.json()
+  const { default: layouts } = await import('./layouts.json', { with: { type: 'json' } })
 
   const verifiedLayouts = (await Promise.allSettled(layouts.map(verifyLayout)))
     .filter(canLoadLayout)

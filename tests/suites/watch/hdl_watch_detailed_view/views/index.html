@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/watch/--/lib/services.js"></script>
+    <script type="module" src="../../../../../layouts/watch/--/lib/items_manager.js"></script>
+    <script type="module" src="../../../../../layouts/watch/hdl_watch_detailed_view/index.js"></script>
+    <script type="module">
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { mockApiResponse, mockMathRandom } from '../../../../helpers/api.js'
+      import { applyParameters, getParameters } from '../../../../helpers/parameters.js'
+      import juris from '../../../../../.lib/juris/instance.js'
+      import messages from '../../../../../layouts/watch/assets/messages.json' with { type: 'json' }
+      import items from '../../../../fixtures/watch/items.json' with { type: 'json' }
+
+      const { layoutState, ...parameters } = getParameters() || {}
+      window.testContext = { lockEvents: [], addEvents: [], parameters }
+
+      if (isTestEnv()) {
+        mockMathRandom(0.1, 0.35, 0.62, 0.83, 0.48, 0.27)
+      }
+
+      if (!isTestEnv()) {
+        const defaultItem = items.find(({ $id }) => $id === 'under_the_skin')
+
+        juris.services.HdlWatch.setLayoutState({
+          itemType: 'movie',
+          searchMode: 'find',
+          'config.playlists': { 'watch sequence': { movie: [defaultItem.$id] } }
+        })
+
+        mockApiResponse({
+          url: '/api/lookup-items',
+
+          payload: [{
+            ...defaultItem,
+
+            meta: {
+              ...defaultItem.meta,
+              duration: 108,
+              genres: ['Science Fiction', 'Drama'],
+              directors: ['Jonathan Glazer'],
+
+              cast: [
+                { name: 'Scarlett Johansson', character: 'The Female' },
+                { name: 'Jeremy McWilliams', character: 'The Bad Man' }
+              ]
+            }
+          }]
+        })
+
+        mockApiResponse({
+          url: '/api/save-item',
+          payload () { return { $id: defaultItem.$id } }
+        })
+
+        mockApiResponse({ url: '/api/set-config/watch' })
+
+        mockApiResponse({
+          url: '/^https://themoviedb.*/configuration$/',
+          payload: { images: { secure_base_url: 'https://image.tmdb.org/t/p/' } }
+        })
+
+        mockApiResponse({
+          url: '/^https://themoviedb.*/(movie|tv)/.+$/',
+
+          payload: {
+            id: defaultItem.meta.externalId,
+            title: defaultItem.title,
+            poster_path: defaultItem.snapshot,
+            vote_average: defaultItem.meta.score,
+            overview: defaultItem.meta.overview,
+            release_date: defaultItem.meta.date
+          }
+        })
+
+        parameters.item ??= defaultItem
+      }
+
+      if (layoutState) {
+        juris.services.HdlWatch.setLayoutState(layoutState)
+      }
+
+      const component = document.createElement('hdl-watch-detailed-view')
+      applyParameters(component, { messages: messages.detailedView }, parameters)
+      document.body.appendChild(component)
+    </script>
+
+    <style>
+      body {
+        background-color: rgb(var(--space));
+      }
+    </style>
+  </head>
+  <body></body>
+</html>

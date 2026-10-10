@@ -9,6 +9,7 @@
   import 'joi'
   import { createValidator } from 'lib/validation.js'
   import { dispatchContentDisplayEvent } from 'lib/item.js'
+  import { setConfig } from 'lib/config.js'
   import '../hdl_dashboard_reminder/index.svelte'
 
   const componentDisplayName = 'dashboard/discovery'
@@ -94,19 +95,14 @@
 
       const chosenItems = pickItems(fetchedItems)
 
-      await fetch('/api/set-config/dashboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await setConfig('dashboard', {
+        reminded: {
+          lastModified: Date.now(),
 
-        body: JSON.stringify({
-          reminded: {
-            lastModified: Date.now(),
-
-            items: chosenItems.map(
-              ({ $id, title, url, snapshot, icon, type }) => ({ $id, title, url, snapshot, icon, type })
-            )
-          }
-        })
+          items: chosenItems.map(
+            ({ $id, title, url, snapshot, icon, type }) => ({ $id, title, url, snapshot, icon, type })
+          )
+        }
       })
 
       return chosenItems

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/watch/--/lib/services.js"></script>
+    <script type="module" src="../../../../../layouts/watch/hdl_watch_body/index.js"></script>
+    <script type="module">
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { mockApiResponse, mockMathRandom } from '../../../../helpers/api.js'
+      import { applyParameters, getParameters } from '../../../../helpers/parameters.js'
+      import * as layoutContext from '../../../../helpers/layout_context.js'
+      import juris from '../../../../../.lib/juris/instance.js'
+
+      // the seven values draw seven distinct posters out of the fixtures, on odd
+      // indices only, leaving the even ones to the playlists
+      const DEFAULT_RANDOM_VALUES = [0.107, 0.25, 0.393, 0.536, 0.679, 0.821, 0.964]
+
+      const { layoutState, randomValues, ...parameters } = getParameters() || {}
+      window.testContext = { modals: [] }
+
+      window.addEventListener(
+        'set-modal',
+        ({ detail: [modal] }) => window.testContext.modals.push(
+          modal && { component: modal.component, item: modal.params?.item }
+        )
+      )
+
+      if (isTestEnv()) {
+        mockMathRandom(...(randomValues ?? DEFAULT_RANDOM_VALUES))
+      } else {
+        juris.services.HdlWatch.setLayoutState({
+          itemType: 'movie',
+          searchMode: 'find',
+
+          search: Object.freeze({
+            offset: 0,
+            max: 200,
+            tags: Object.freeze([]),
+            connectees: Object.freeze([]),
+            text: '',
+            workspace: '',
+            includeDraft: true
+          })
+        })
+
+        const { default: { tmdbApi } } = await import(
+          new URL('project.development.config.js', location.origin)
+        ).catch(() => ({ default: {} }))
+
+        await navigator.serviceWorker.register(
+          'tmdb_pathes_interceptor.js',
+          {
+            scope: location.pathname,
+            type: 'module'
+          }
+        )
+
+        const service = await navigator.serviceWorker.ready
+
+        if (service.active) {
+          service.active.postMessage({ type: 'TMDB_API', payload: tmdbApi })
+        }
+
+        const { default: items } =
+          await import( '../../../../fixtures/watch/items.json', { with: { type: 'json' } })
+
+        const multipliedItems = Array.from({ length: 230 })
+          .map((_, index) => {
+            const selectedIndex = index % items.length
+            return items[selectedIndex]
+          })
+
+        mockApiResponse({
+          url: '/api/find-items',
+
+          payload (_, options) {
+            const { text: query, offset, max } = (options?.body && JSON.parse(options.body)) || {}
+            const tagFreeQuery = query?.replace('"to watch"', '').trim()
+
+            if (tagFreeQuery) {
+              const lowercaseQuery = tagFreeQuery.toLowerCase()
+              return items.filter(item => item.title?.toLowerCase().includes(lowercaseQuery))
+            }
+
+            return multipliedItems.slice(offset, max)
+          }
+        })
+
+        mockApiResponse({
+          url: '/api/count-items',
+          payload: multipliedItems.length
+        })
+
+        mockApiResponse({
+          url: '/api/get-config/watch',
+
+          payload: {
+            playlists: {
+              'watch sequence': {
+                movie: ['under_the_skin', 'the_astronaut', 'the_summit_of_the_gods', 'luther_fallen_sun', 'unknown_poster_id']
+              },
+              rewatch: {
+                movie: ['top_gun_maverick', 'eyes_wide_shut']
+              },
+              'backup series': {
+                'tv show': ['blow_out', 'hilda', 'ballerina']
+              }
+            }
+          }
+        })
+
+        mockApiResponse({
+          url: '/api/lookup-items',
+
+          payload (_, options) {
+            const ids = (options?.body && JSON.parse(options.body)) || []
+
+            return ids.map(id => items.find(({ $id }) => id === $id) ||
+              (id === 'the_summit_of_the_gods' && {
+                $id: 'the_summit_of_the_gods',
+                title: 'The summit of the gods',
+                url: 'https://tmdb/the_summit_of_the_gods',
+                snapshot: '/heimdall-layouts/tests/suites/watch/main/views/assets/images/the_summit_of_the_gods.webp'
+              }))
+          }
+        })
+
+        mockApiResponse({
+          url: '/api/save-item',
+          payload () { return { $id: 'items/' + Date.now() } }
+        })
+
+        mockApiResponse({ url: '/api/set-config/watch' })
+        mockApiResponse({ url: '/^/api/remove-item/.*$/' })
+
+        if (!tmdbApi?.key) {
+          mockApiResponse({
+            url: '/^https://themoviedb.trd-api.heimdallinsight.com/\\d+/configuration$/',
+
+            payload: {
+              images: {
+                secure_base_url: 'https://image.tmdb.org/t/p/'
+              }
+            }
+          })
+
+          mockApiResponse({
+            url: '/^https://themoviedb.trd-api.heimdallinsight.com/\\d+/search/.*$/',
+
+            payload (uri) {
+              const { searchParams } = new URL(uri)
+
+              if (searchParams.has('query')) {
+                const lowercaseQuery = searchParams.get('query').toLowerCase()
+                const filteredItems = items.filter(item => item.title?.toLowerCase().includes(lowercaseQuery))
+
+                return {
+                  results: filteredItems.map(({ $id, title, snapshot, meta }) => ({
+                    id: meta?.externalId || $id,
+                    title,
+                    poster_path: snapshot,
+                    vote_average: meta?.score,
+                    overview: meta?.overview,
+                    release_date: meta?.date
+                  })),
+
+                  total_results: filteredItems.length
+                }
+              }
+
+              return {
+                results: [],
+                total_results: 0
+              }
+            }
+          })
+
+          mockApiResponse({
+            url: '/^https://themoviedb.trd-api.heimdallinsight.com/\\d+/(movie|tv)/.+?\\?.*$/',
+
+            payload (uri) {
+              const { pathname } = new URL(uri)
+              const { id } = pathname.match(/\/(movie|tv)\/(?<id>.+?)\?/)
+              const item = items.find(item => item.$id === id)
+
+              return item ? {
+                id: item.meta?.externalId || id,
+                title: item.title,
+                poster_path: item.snapshot,
+                vote_average: item.meta?.score,
+                overview: item.meta?.overview,
+                release_date: item.meta?.date
+              } : { id }
+            }
+          })
+        }
+      }
+
+      if (layoutState) {
+        juris.services.HdlWatch.setLayoutState(layoutState)
+      }
+
+      const component = document.createElement('hdl-watch-body')
+      applyParameters(component, { layoutContext }, parameters)
+      document.body.appendChild(component)
+    </script>
+
+    <style>
+      body {
+        background-color: rgb(var(--space));
+        height: 100dvh;
+      }
+    </style>
+  </head>
+  <body></body>
+</html>

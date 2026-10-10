@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+
+    <script type="module">
+      const createMockJurisLogger = () => {
+          const s = []
+
+          const f = (m, c, cat) => {
+              const msg = `${cat ? `[${cat}] ` : ''}${m}${c ? ` ${JSON.stringify(c)}` : ''}`
+              const logObj = { formatted: msg, message: m, context: c, category: cat, timestamp: Date.now() }
+              setTimeout(() => s.forEach(sub => sub(logObj)), 0)
+              return logObj
+          }
+
+          return {
+              log: { l: f, w: f, e: f, i: f, d: f, ei:true, ee:true, el:true, ew:true, ed:true },
+              sub: cb => s.push(cb),
+              unsub: cb => s.splice(s.indexOf(cb), 1)
+          }
+      }
+
+      Object.assign(window, createMockJurisLogger())
+    </script>
+
+    <script type="module" src="/node_modules/juris/juris-enhance.js"></script>
+    <script type="module" src="../../../../../layouts/watch/hdl_watch_body/hero_carousel.js"></script>
+
+    <script type="module">
+      import juris from '../../../../../.lib/juris/instance.js'
+      import messages from '../../../../../layouts/watch/assets/messages.json' with { type: 'json' }
+
+      const meter = document.getElementById('meter')
+      meter.style.width = '1em'
+      const oneEm = meter.getBoundingClientRect().width
+
+      const template = document.createElement('template')
+
+      template.innerHTML = `
+      <link rel="stylesheet" href="../../../../../layouts/watch/hdl_watch_body/styles/index.css" />
+      <style>
+        :host {
+          padding: 0;
+          background-image: none;
+        }
+
+        .hero-carousel { margin-block: 0; }
+        main { height: 100%; }
+      </style>
+      <main id="main"></main>
+      `
+
+      class CarouselContainer extends HTMLElement {
+        #shadow
+
+        set posters (posters) {
+          juris.setState('carouselContainer.posters', posters)
+        }
+
+        get posters () {
+          return juris.getState('carouselContainer.posters')
+        }
+
+        constructor () {
+          super()
+          this.#shadow = this.attachShadow({ mode: 'open' })
+          this.#shadow.appendChild(template.content.cloneNode(true))
+        }
+
+        connectedCallback () {
+          window.addEventListener('resize', () => this.#setPosterWidths())
+          this.#setPosterWidths()
+
+          juris.enhance(this.#shadow.getElementById('main'), {
+            children: () => ({
+              HdlWatchHeroCarousel: {
+                messages: messages.carousel,
+                posters: juris.getState('carouselContainer.posters'),
+                styleLoaded: () => true,
+                touchMoveDisabled: () => true,
+                searching: () => false,
+
+                ondetail (item) {
+                  console.debug('zoom on ' + item.title)
+                  window.testContext.zoom.push(item)
+                }
+              }
+            })
+          })
+        }
+
+        #setPosterWidths () {
+          const STD_POSTER_WIDTH = 12.75
+          const MEDIAN_POSTER_WIDTH = 18.331
+          const POSTER_SCALE_RATIO = MEDIAN_POSTER_WIDTH / STD_POSTER_WIDTH
+          const POSTER_SIZE_RATIO = 2 / 3
+          const viewportHeightInEm = visualViewport.height / oneEm
+          const standardPosterWidth = viewportHeightInEm * POSTER_SIZE_RATIO * 0.55
+          const medianPosterWidth = standardPosterWidth * POSTER_SCALE_RATIO
+
+          this.#shadow.host.style.setProperty('--std-poster-width', standardPosterWidth)
+          this.#shadow.host.style.setProperty('--median-poster-width', medianPosterWidth)
+        }
+      }
+
+      customElements.define('carousel-container', CarouselContainer)
+    </script>
+
+    <script type="module">
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { applyParameters, getParameters } from '../../../../helpers/parameters.js'
+      import items from '../../../../fixtures/watch/items.json' with { type: 'json' }
+
+      const { withAllItems, withSomeItems, ...parameters } = getParameters() || {}
+      window.testContext = { zoom: [] }
+
+      let posters
+
+      if (!isTestEnv() || withAllItems) {
+        posters = items
+      }
+
+      if (!posters && withSomeItems) {
+        posters = items.slice(0, 3)
+      }
+
+      const carouselContainer = document.createElement('carousel-container')
+      applyParameters(carouselContainer, { posters }, parameters)
+      document.body.appendChild(carouselContainer)
+    </script>
+
+    <style>
+      body {
+        background-color: rgb(var(--deepwater));
+        height: 100vh;
+      }
+
+      carousel-container {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #meter {
+        position: absolute;
+        top: 0;
+        left: 0;
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="meter"></div>
+  </body>
+</html>

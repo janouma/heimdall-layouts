@@ -8,17 +8,23 @@
     <script type="module">
       import { isTestEnv } from '../../../../helpers/env.js'
       import { mockApiResponse, mockMathRandom } from '../../../../helpers/api.js'
-      import { applyParameters } from '../../../../helpers/parameters.js'
+      import { applyParameters, getParameters } from '../../../../helpers/parameters.js'
       import * as layoutContext from '../../../../helpers/layout_context.js'
 
-      if (isTestEnv()) {
-        mockMathRandom(0.1, 0.2, 0.999999, 0.9, 0.5, 0.6)
+      const { randomValues, ...parameters } = getParameters() || {}
+
+      if (randomValues) {
+        mockMathRandom(...randomValues)
+      } else {
+        if (isTestEnv()) {
+          mockMathRandom(0.1, 0.2, 0.999999, 0.9, 0.5, 0.6)
+        }
       }
 
       if (!isTestEnv()) {
         {
-          const response = await fetch('../../../../fixtures/dashboard/last_items.json')
-          const lastItems = await response.json()
+          const { default: lastItems } =
+            await import('../../../../fixtures/dashboard/last_items.json', { with: { type: 'json' } })
 
           mockApiResponse({
             url: '/api/find-items',
@@ -46,8 +52,7 @@
         }
 
         {
-          const response = await fetch('../../../../fixtures/dashboard/config.json')
-          const config = await response.json()
+          const { default: config } = await import('../../../../fixtures/dashboard/config.json', { with: { type: 'json' } })
 
           mockApiResponse({
             url: '/api/get-config/dashboard',
@@ -59,7 +64,7 @@
       }
 
       const layoutBody = document.createElement('hdl-dashboard-body')
-      applyParameters(layoutBody, { layoutContext })
+      applyParameters(layoutBody, { layoutContext }, parameters)
       document.body.appendChild(layoutBody)
     </script>
 

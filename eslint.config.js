@@ -58,7 +58,7 @@ export default [
     processor: 'svelte/svelte'
   },
   {
-    files: ['**/*.js', '**/*.cjs'],
+    files: ['**/*.js', '**/*.cjs', '**/*.esm'],
     languageOptions: {
       parser: babelEslintParser
     }

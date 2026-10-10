@@ -26,8 +26,15 @@ export const mutations = {
 
   setSearchOffset () {},
   setSearchTags () {},
-  setSearchConnectees () {},
-  setSearchText () {},
+  setSearchConnectees () { },
+
+  setSearchText (text) {
+    state.search.set({
+      ...state.search.value,
+      text
+    })
+  },
+
   setSearchWorkspace () {},
   setSearchIncludeDraft () {},
   setSearch () {},
@@ -173,7 +180,9 @@ function createStore (initialValue) {
   }
 
   return Object.freeze({
-    get value () {
+    // not part of the svelte store api.
+    // test purpose onny
+    get valueForTest () {
       return value
     },
 

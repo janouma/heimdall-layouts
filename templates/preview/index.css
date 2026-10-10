@@ -1497,7 +1497,8 @@ a {
   flex-wrap:wrap;
   min-width:375px;
   grid-row-gap:var(--gutter);
-  row-gap:var(--gutter)
+  row-gap:var(--gutter);
+  position: relative;
 }
 .hdl-main-header.with-column-gap {
   grid-column-gap:var(--gutter);

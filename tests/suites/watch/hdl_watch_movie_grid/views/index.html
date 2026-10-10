@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" class="development">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0, user-scalable = no, maximum-scale=1.0, viewport-fit=cover">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../../../../index.css">
+    <script type="module" src="../../../../../layouts/watch/--/lib/services.js"></script>
+    <script type="module" src="../../../../../layouts/watch/--/lib/items_manager.js"></script>
+    <script type="module" src="../../../../../layouts/watch/hdl_watch_movie_grid/index.js"></script>
+    <script type="module">
+      import { isTestEnv } from '../../../../helpers/env.js'
+      import { applyParameters, getParameters } from '../../../../helpers/parameters.js'
+      import messages from '../../../../../layouts/watch/assets/messages.json' with { type: 'json' }
+      import items from '../../../../fixtures/watch/items.json' with { type: 'json' }
+
+      const { fillLimit, withShadow, ...parameters } = getParameters() || {}
+      window.testContext = { detailEvents: [] }
+
+      let posters
+
+      if (!isTestEnv() || fillLimit) {
+        posters = Array.from({ length: fillLimit || 60 })
+          .map((_, index) => {
+            const selectedIndex = index % items.length
+            return items[selectedIndex]
+          })
+
+        const { default: juris } = await import('../../../../../.lib/juris/instance.js')
+        juris.services.HdlWatch.setLayoutState('searchMode', 'find')
+      }
+
+      const component = document.createElement('hdl-watch-movie-grid')
+
+      if (withShadow) {
+        component.classList.add('shadow')
+      }
+
+      applyParameters(
+        component,
+        {
+          messages: messages.movieGrid,
+          parent: document.body,
+          items: posters
+        },
+        parameters
+      )
+
+      document.body.appendChild(component)
+    </script>
+
+    <style>
+      body {
+        --poster-aspect-ratio: 2 / 3;
+
+        padding: 3.5vh 1.5vw;
+        background-color: rgb(var(--space));
+      }
+
+      .shadow {
+        --movie-grid-shadow-length: 1em;
+        --movie-grid-shadow-color: black;
+      }
+    </style>
+  </head>
+  <body></body>
+</html>

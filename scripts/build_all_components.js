@@ -18,7 +18,9 @@ const components = readdirSync('src', { withFileTypes: true })
 const args = process.argv.slice(2).join(' ')
 
 for (const component of components) {
-  const compileResult = shell.exec(`npm run build:component -- name=${component} ${args}`)
+  const [layoutName, componentFolder] = component.split('/')
+  const componentName = componentFolder.replace(new RegExp(`^hdl_${layoutName}_`), '')
+  const compileResult = shell.exec(`npm run build:component -- name=${layoutName}/${componentName} ${args}`)
 
   if (compileResult.code > 0) {
     throw new Error('failed to compile component ' + component)
