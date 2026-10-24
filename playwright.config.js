@@ -1,5 +1,17 @@
 import { devices } from '@playwright/test'
+import { mkdirSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
 import env from './env.js'
+
+// macOS 27 protects ~/Library/Application Support/Firefox, which Playwright's Firefox shares
+// with an installed Firefox: launches hang. Remove once fixed upstream (microsoft/playwright#42768)
+const isMacOs = process.platform === 'darwin'
+const firefoxHome = join(tmpdir(), 'heimdall-layouts-playwright-firefox-home')
+
+if (isMacOs) {
+  mkdirSync(firefoxHome, { recursive: true })
+}
 
 const screenshotConfig = {
   maxDiffPixelRatio: 0.00625
@@ -70,7 +82,14 @@ export default {
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] }
+
+      use: {
+        ...devices['Desktop Firefox'],
+
+        ...(isMacOs && {
+          launchOptions: { env: { ...process.env, CFFIXED_USER_HOME: firefoxHome } }
+        })
+      }
     },
 
     {
