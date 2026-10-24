@@ -204,9 +204,11 @@ juris.registerHeadlessComponent('ItemsManager', function ItemsManager (
         ) {
           const keywords = [...new Set([
             updates.meta.originalTitle,
-            ...updates.meta.genres,
-            ...updates.meta.directors,
-            ...updates.meta.cast.map(person => person.name)
+            ...(updates.meta.genres ?? []),
+            ...(updates.meta.directors ?? []),
+            ...(updates.meta.cast?.map(person => person.name) ?? []),
+            ...(updates.meta.frenchTitle ? [updates.meta.frenchTitle] : []),
+            ...(updates.meta.englishTitle ? [updates.meta.englishTitle] : [])
           ])].filter(keyword => Boolean(keyword))
 
           if (keywords.length > 0) {

@@ -121,7 +121,7 @@ test('add mode external item lookup', async ({ page, context }) => {
     route => route.fulfill({ json: { images: { secure_base_url: 'https://image.tmdb.org/' } } })
   )
 
-  await page.route(/themoviedb.+\/3\/movie\/97370\?append_to_response=credits$/, async route => {
+  await page.route(/themoviedb.+\/3\/movie\/97370\?append_to_response=credits,translations$/, async route => {
     await lookupGate
 
     return route.fulfill({

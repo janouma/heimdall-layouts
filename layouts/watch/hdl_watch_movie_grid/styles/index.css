@@ -142,7 +142,7 @@ html,
   cursor: pointer;
   isolation: isolate;
   transition-property: box-shadow;
-  background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_movie_grid/assets/images/blackhole.webp) no-repeat center / cover;
+  background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_movie_grid/assets/images/blackhole.webp) no-repeat center / cover;
 
   &,
   .poster-visual {
@@ -334,11 +334,11 @@ html,
   }
 
   .confirm {
-    background-image: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_movie_grid/assets/images/yes.svg);
+    background-image: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_movie_grid/assets/images/yes.svg);
   }
 
   .abort {
-    background-image: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_movie_grid/assets/images/no.svg);
+    background-image: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_movie_grid/assets/images/no.svg);
   }
 }
 
