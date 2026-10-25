@@ -196,7 +196,7 @@ input:focus::placeholder, textarea:focus::placeholder {
   aspect-ratio: 2 / 3;
   border-radius: 0.35em;
   overflow: hidden;
-  background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/blackhole.webp) no-repeat center / cover;
+  background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/blackhole.webp) no-repeat center / cover;
 }
 
 .poster-visual {
@@ -427,7 +427,7 @@ button {
     }
 
 .tag:not(.active)::before {
-      background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/cross.svg) no-repeat center / contain;
+      background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/cross.svg) no-repeat center / contain;
     }
 
 .tag.active {
@@ -435,7 +435,7 @@ button {
   }
 
 .tag.active::before {
-      background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/check.svg) no-repeat center / contain;
+      background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/check.svg) no-repeat center / contain;
     }
 
 .tag.failure > .status {
@@ -452,7 +452,7 @@ button {
 
 .d3::after {
     content: "";
-    background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/icon_3d.svg) no-repeat center / contain;
+    background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/icon_3d.svg) no-repeat center / contain;
     width: 2.1em;
     height: 1.125em;
   }
@@ -490,7 +490,7 @@ button {
     left: auto;
     padding-left: 1.5em;
     text-transform: lowercase;
-    background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/enter_key.svg) no-repeat;
+    background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/enter_key.svg) no-repeat;
     background-size: 1em auto;
     background-position: center left;
     color: color-mix(in srgb, currentColor, transparent 50%);
@@ -628,7 +628,7 @@ button {
 
 .playlist-clear {
 
-  background: transparent url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/clear.svg) no-repeat center /
+  background: transparent url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/clear.svg) no-repeat center /
     contain;
 
   > span {
@@ -656,7 +656,7 @@ button {
 
 .save-button::after {
     content: "";
-    background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/thumb_up.svg) no-repeat center / contain;
+    background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/thumb_up.svg) no-repeat center / contain;
     width: 1em;
     height: 1.1em;
   }
@@ -666,7 +666,7 @@ button {
   }
 
 .save-button.pending::after {
-      background-image: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/stop_hand.svg);
+      background-image: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/stop_hand.svg);
     }
 
 .save-button.success {
@@ -674,7 +674,7 @@ button {
   }
 
 .save-button.success::after {
-      background-image: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/cool_hand.svg);
+      background-image: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/cool_hand.svg);
     }
 
 .save-button.failure {
@@ -682,7 +682,7 @@ button {
   }
 
 .save-button.failure::after {
-      background-image: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/thumb_down.svg);
+      background-image: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/thumb_down.svg);
     }
 
 .cast {
@@ -711,7 +711,7 @@ button {
   border-radius: 0.29375em;
   overflow: hidden;
 
-  background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/avatar_placeholder.svg) no-repeat center /
+  background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_detailed_view/assets/images/avatar_placeholder.svg) no-repeat center /
     contain;
 
   > img {

@@ -227,7 +227,7 @@ html,
     visibility: hidden;
     opacity: 0;
 
-    background: transparent url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_body/assets/images/chevron.svg) center/contain
+    background: transparent url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_body/assets/images/chevron.svg) center/contain
       no-repeat
   }
 
@@ -269,7 +269,7 @@ html,
 }
 
 .hero-poster {
-  background: url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_body/assets/images/blackhole.webp) no-repeat center / cover;
+  background: url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_body/assets/images/blackhole.webp) no-repeat center / cover;
 }
 
 .hero-poster {

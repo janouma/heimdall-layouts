@@ -54,9 +54,16 @@ if (existsSync(failuresReport)) {
     : `(echo "${red('✘ all attempts failed')}" && exit 1)`
 
   try {
-    execSync(command + ' || ' + fallBackCommand, { stdio: 'inherit' })
+    execSync(command, { stdio: 'inherit' })
   } catch (error) {
-    process.exit(1)
+    const NO_ERROR = 0
+    const INTERUPTION = 130
+
+    if ([NO_ERROR, INTERUPTION].includes(error.status)) {
+      process.exit(error.status)
+    } else {
+      execSync(fallBackCommand, { stdio: 'inherit' })
+    }
   }
 } else {
   console.info(green('no failure occured on the previous test run'))

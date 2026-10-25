@@ -42,7 +42,7 @@ export async function lookup ({ id, type }) {
   const mappedType = typesMappping[type]
 
   const response = await fetch(
-    `${TMDB_API_URL}/${mappedType}/${encodeURIComponent(id)}?append_to_response=credits`,
+    `${TMDB_API_URL}/${mappedType}/${encodeURIComponent(id)}?append_to_response=credits,translations`,
     { headers: { accept: 'application/json' } }
   )
 
@@ -86,6 +86,7 @@ function convertToItem ({
     runtime,
     genres,
     credits,
+    translations,
     number_of_seasons: seasonsCount,
     status,
     created_by: creators
@@ -130,6 +131,12 @@ function convertToItem ({
     directors = director && [director]
   }
 
+  const frenchTitle =
+    translations?.translations.find((t) => t.iso_639_1 === 'fr')?.data?.title
+
+  const englishTitle =
+    translations?.translations.find((t) => t.iso_639_1 === 'en')?.data?.title
+
   return {
     url: `${TMDB_WEB_URL}/${mappedType}/${encodeURIComponent(externalId)}`,
     snapshot: snapshot && `${imagesBaseUrl}w500/${snapshot}`,
@@ -138,6 +145,8 @@ function convertToItem ({
     meta: stripUsetValues({
       externalId,
       originalTitle: originalTitle || originalName,
+      frenchTitle,
+      englishTitle,
       // overview can be blank
       overview: overview || undefined,
       score,
@@ -151,11 +160,13 @@ function convertToItem ({
       genres: filteredGenres?.length > 0 ? filteredGenres : undefined,
       directors,
 
-      cast: credits?.cast?.map(({ name, character, profile_path: profile }) => stripUsetValues({
-        name,
-        character,
-        picture: profile && `${imagesBaseUrl}w185/${profile}`
-      })),
+      cast: credits?.cast?.length > 0
+        ? credits?.cast?.map(({ name, character, profile_path: profile }) => stripUsetValues({
+          name,
+          character,
+          picture: profile && `${imagesBaseUrl}w185/${profile}`
+        }))
+        : undefined,
 
       ...(mappedType === 'tv' && {
         seasonsCount,
@@ -165,6 +176,9 @@ function convertToItem ({
   }
 }
 
+// drops absent values, and strings left empty or blank by tmdb
 const stripUsetValues = obj => Object.fromEntries(
-  Object.entries(obj).filter(([, value]) => value != null)
+  Object.entries(obj).filter(
+    ([, value]) => value != null && (typeof value !== 'string' || value.trim() !== '')
+  )
 )

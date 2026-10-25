@@ -358,7 +358,7 @@ test.group('watch items manager', group => {
         json: () => Promise.resolve({ images: { secure_base_url: 'https://images.tmdb.org/' } })
       })
 
-    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits`, td.matchers.anything()))
+    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits,translations`, td.matchers.anything()))
       .thenResolve({
         ok: true,
         json: () => Promise.resolve({ id: 42, title: 'Dune' })
@@ -383,6 +383,8 @@ test.group('watch items manager', group => {
 
       meta: {
         originalTitle: 'Dune',
+        frenchTitle: 'Dune : Première partie',
+        englishTitle: 'Dune',
         genres: ['Science Fiction', 'Adventure'],
         directors: ['Denis Villeneuve'],
 
@@ -392,12 +394,14 @@ test.group('watch items manager', group => {
         ]
       },
 
+      // the english title matches the original one, and is kept only once
       keywords: [
         'Dune',
         'Science Fiction',
         'Adventure',
         'Denis Villeneuve',
-        'Timothée Chalamet'
+        'Timothée Chalamet',
+        'Dune : Première partie'
       ],
 
       tags: ['sci-fi', 'to watch', 'movie']
@@ -417,6 +421,8 @@ test.group('watch items manager', group => {
 
       meta: {
         originalTitle: 'Dune',
+        frenchTitle: 'Dune : Première partie',
+        englishTitle: 'Dune',
         genres: ['Science Fiction', 'Adventure'],
         directors: ['Denis Villeneuve'],
 
@@ -428,6 +434,50 @@ test.group('watch items manager', group => {
     })
 
     expect(result).toEqual(savedItem)
+  })
+
+  test('#save item with partial meta', async ({ expect }) => {
+    setLayoutState('itemType', 'movie')
+
+    // a meta short of genres, directors and cast still gets its keywords
+    {
+      const matchItem = createBodyMatcher(expect, {
+        title: 'Dune',
+        type: 'url',
+        meta: { originalTitle: 'Dune' },
+        keywords: ['Dune'],
+        tags: ['to watch', 'movie']
+      })
+
+      td.when(fetch('/api/save-item', td.matchers.argThat(matchItem)))
+        .thenResolve({ ok: true, json: () => Promise.resolve({ $id: 'items/1' }) })
+    }
+
+    await itemsManager.save({
+      $id: 'items/1',
+      title: 'Dune',
+      meta: { originalTitle: 'Dune' }
+    })
+
+    // without an original title, the keywords come from what there is
+    {
+      const matchItem = createBodyMatcher(expect, {
+        title: 'Dune',
+        type: 'url',
+        meta: { cast: [{ name: 'Zendaya' }] },
+        keywords: ['Zendaya'],
+        tags: ['to watch', 'movie']
+      })
+
+      td.when(fetch('/api/save-item', td.matchers.argThat(matchItem)))
+        .thenResolve({ ok: true, json: () => Promise.resolve({ $id: 'items/1' }) })
+    }
+
+    return itemsManager.save({
+      $id: 'items/1',
+      title: 'Dune',
+      meta: { cast: [{ name: 'Zendaya' }] }
+    })
   })
 
   test('#save existing item', async ({ expect }) => {

@@ -122,7 +122,7 @@ folder-browser {
 .plus {
   height: 1.5em;
   aspect-ratio: 1;
-  background: transparent url(https://janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_header/assets/images/plus.svg) no-repeat center / contain;
+  background: transparent url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_header/assets/images/plus.svg) no-repeat center / contain;
   cursor: pointer
 }
 

@@ -274,7 +274,7 @@ test.group('watch items seeker', group => {
 
     const matchOptions = createOptionsMatcher(expect, { headers: { accept: 'application/json' } })
 
-    td.when(fetch(`${TMDB_API_URL}/movie/dune%202?append_to_response=credits`, td.matchers.argThat(matchOptions)))
+    td.when(fetch(`${TMDB_API_URL}/movie/dune%202?append_to_response=credits,translations`, td.matchers.argThat(matchOptions)))
       .thenResolve({
         ok: true,
 
@@ -298,10 +298,100 @@ test.group('watch items seeker', group => {
     })
   })
 
+  test('#lookup translated titles', async ({ expect }) => {
+    mockConfiguration()
+
+    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits,translations`, td.matchers.anything()))
+      .thenResolve({
+        ok: true,
+
+        json: () => Promise.resolve({
+          id: 42,
+          title: 'Dune',
+          original_title: 'Dune',
+
+          // picked by language rather than by position
+          translations: {
+            translations: [
+              { iso_639_1: 'de', data: { title: 'Dune: Teil Eins' } },
+              { iso_639_1: 'fr', data: { title: 'Dune : Première partie' } },
+              { iso_639_1: 'en', data: { title: 'Dune: Part One' } }
+            ]
+          }
+        })
+      })
+
+    const { meta } = await itemsSeekerApi.lookup({ id: 42, type: 'movie' })
+
+    expect(meta).toEqual({
+      externalId: 42,
+      originalTitle: 'Dune',
+      frenchTitle: 'Dune : Première partie',
+      englishTitle: 'Dune: Part One'
+    })
+  })
+
+  test('#lookup blank values', async ({ expect }) => {
+    mockConfiguration()
+
+    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits,translations`, td.matchers.anything()))
+      .thenResolve({
+        ok: true,
+
+        json: () => Promise.resolve({
+          id: 42,
+          title: 'Dune',
+          original_title: 'Dune',
+          overview: '   ',
+
+          credits: {
+            cast: [{ name: 'Zendaya', character: '' }]
+          },
+
+          // tmdb leaves the title empty where it matches the original one
+          translations: {
+            translations: [
+              { iso_639_1: 'fr', data: { title: '' } },
+              { iso_639_1: 'en', data: { title: ' ' } }
+            ]
+          }
+        })
+      })
+
+    const { meta } = await itemsSeekerApi.lookup({ id: 42, type: 'movie' })
+
+    // empty or blank strings are dropped, in the meta as in each cast member
+    expect(meta).toEqual({
+      externalId: 42,
+      originalTitle: 'Dune',
+      cast: [{ name: 'Zendaya' }]
+    })
+  })
+
+  test('#lookup without cast', async ({ expect }) => {
+    mockConfiguration()
+
+    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits,translations`, td.matchers.anything()))
+      .thenResolve({
+        ok: true,
+
+        json: () => Promise.resolve({
+          id: 42,
+          title: 'Dune',
+          credits: { crew: [], cast: [] }
+        })
+      })
+
+    const { meta } = await itemsSeekerApi.lookup({ id: 42, type: 'movie' })
+
+    // an empty cast is left out rather than kept as an empty list
+    expect(meta).toEqual({ externalId: 42 })
+  })
+
   test('#lookup failure', async ({ expect }) => {
     mockConfiguration()
 
-    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits`, td.matchers.anything()))
+    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits,translations`, td.matchers.anything()))
       .thenResolve({ ok: false, redirected: false })
 
     await expect(itemsSeekerApi.lookup({ id: 42, type: 'movie' }))
@@ -311,7 +401,7 @@ test.group('watch items seeker', group => {
   test('#lookup redirected response', async ({ expect }) => {
     mockConfiguration()
 
-    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits`, td.matchers.anything()))
+    td.when(fetch(`${TMDB_API_URL}/movie/42?append_to_response=credits,translations`, td.matchers.anything()))
       .thenResolve({
         ok: false,
         redirected: true,

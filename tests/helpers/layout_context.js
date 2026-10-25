@@ -181,7 +181,7 @@ function createStore (initialValue) {
 
   return Object.freeze({
     // not part of the svelte store api.
-    // test purpose onny
+    // test purpose only
     get valueForTest () {
       return value
     },
