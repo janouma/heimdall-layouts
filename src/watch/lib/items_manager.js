@@ -202,14 +202,23 @@ juris.registerHeadlessComponent('ItemsManager', function ItemsManager (
             ].some(property => updates.meta[property]?.length > 0)
           )
         ) {
-          const keywords = [...new Set([
-            updates.meta.originalTitle,
-            ...(updates.meta.genres ?? []),
-            ...(updates.meta.directors ?? []),
-            ...(updates.meta.cast?.map(person => person.name) ?? []),
-            ...(updates.meta.frenchTitle ? [updates.meta.frenchTitle] : []),
-            ...(updates.meta.englishTitle ? [updates.meta.englishTitle] : [])
-          ])].filter(keyword => Boolean(keyword))
+          const API_KEYWORD_MIN_LENGTH = 2
+
+          // trimmed before deduplication, so that values differing only by
+          // their spaces are kept once
+          const keywords = [...new Set(
+            [
+              updates.meta.originalTitle,
+              ...(updates.meta.genres ?? []),
+              ...(updates.meta.directors ?? []),
+              ...(updates.meta.cast?.map(person => person.name) ?? []),
+              ...(updates.meta.frenchTitle ? [updates.meta.frenchTitle] : []),
+              ...(updates.meta.englishTitle ? [updates.meta.englishTitle] : [])
+            ].flatMap(keyword => {
+              const trimmed = typeof keyword === 'string' ? keyword.trim() : ''
+              return trimmed.length >= API_KEYWORD_MIN_LENGTH ? [trimmed] : []
+            })
+          )]
 
           if (keywords.length > 0) {
             updates.keywords = keywords

@@ -480,6 +480,52 @@ test.group('watch items manager', group => {
     })
   })
 
+  test('#save keywords below the api minimum', async ({ expect }) => {
+    setLayoutState('itemType', 'movie')
+
+    const meta = {
+      originalTitle: 'Up', // just long enough
+      genres: ['M', '  ', 'Animation'], // too short, even blank
+      directors: ['Pete Docter'],
+
+      cast: [
+        { name: 42 }, // not a string
+        { name: ' Pete Docter ' }, // the director again, once trimmed
+        { name: 'Ed Asner' }
+      ]
+    }
+
+    {
+      const matchItem = createBodyMatcher(expect, {
+        title: 'Up',
+        type: 'url',
+        meta,
+        keywords: ['Up', 'Animation', 'Pete Docter', 'Ed Asner'],
+        tags: ['to watch', 'movie']
+      })
+
+      td.when(fetch('/api/save-item', td.matchers.argThat(matchItem)))
+        .thenResolve({ ok: true, json: () => Promise.resolve({ $id: 'items/1' }) })
+    }
+
+    await itemsManager.save({ $id: 'items/1', title: 'Up', meta })
+
+    // nothing long enough left: the keywords are left out altogether
+    {
+      const matchItem = createBodyMatcher(expect, {
+        title: 'M',
+        type: 'url',
+        meta: { originalTitle: 'M' },
+        tags: ['to watch', 'movie']
+      })
+
+      td.when(fetch('/api/save-item', td.matchers.argThat(matchItem)))
+        .thenResolve({ ok: true, json: () => Promise.resolve({ $id: 'items/2' }) })
+    }
+
+    return itemsManager.save({ $id: 'items/2', title: 'M', meta: { originalTitle: 'M' } })
+  })
+
   test('#save existing item', async ({ expect }) => {
     setLayoutState('itemType', 'movie')
 
