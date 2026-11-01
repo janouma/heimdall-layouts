@@ -96,6 +96,13 @@ folder-browser {
   aspect-ratio: 1;
   background: transparent url(assets/images/plus.svg) no-repeat center / contain;
   cursor: pointer;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -0.5em;
+  }
 
   &.selected {
     filter: brightness(0.5) sepia(1) hue-rotate(150deg) saturate(6);

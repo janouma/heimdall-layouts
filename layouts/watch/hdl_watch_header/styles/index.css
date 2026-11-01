@@ -123,8 +123,18 @@ folder-browser {
   height: 1.5em;
   aspect-ratio: 1;
   background: transparent url(//janouma.github.io/heimdall-layouts/layouts/watch/hdl_watch_header/assets/images/plus.svg) no-repeat center / contain;
-  cursor: pointer
+  cursor: pointer;
+  position: relative
 }
+
+.plus::after {
+    content: "";
+    position: absolute;
+    top: -0.5em;
+    right: -0.5em;
+    bottom: -0.5em;
+    left: -0.5em;
+  }
 
 .plus.selected {
     filter: brightness(0.5) sepia(1) hue-rotate(150deg) saturate(6);
