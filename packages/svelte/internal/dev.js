@@ -9,8 +9,8 @@ import {
 	attr
 } from './dom.js';
 import { SvelteComponent } from './Component.js';
-import { is_void } from './--/--/shared/utils/names.js';
-import { VERSION } from './--/--/shared/version.js';
+import { is_void } from '../../shared/utils/names.js';
+import { VERSION } from '../../shared/version.js';
 import { contenteditable_truthy_values } from './utils.js';
 import { ensure_array_like } from './each.js';
 

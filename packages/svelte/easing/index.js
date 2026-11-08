@@ -2,7 +2,7 @@
 Adapted from https://github.com/mattdesl
 Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICENSE.md
 */
-export { identity as linear } from './--/internal/index.js';
+export { identity as linear } from '../internal/index.js';
 
 /**
  * https://svelte.dev/docs/svelte-easing

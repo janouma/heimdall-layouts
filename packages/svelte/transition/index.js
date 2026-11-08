@@ -1,5 +1,5 @@
-import { cubicOut, cubicInOut, linear } from './--/easing/index.js';
-import { assign, split_css_unit, is_function } from './--/internal/index.js';
+import { cubicOut, cubicInOut, linear } from '../easing/index.js';
+import { assign, split_css_unit, is_function } from '../internal/index.js';
 
 /**
  * Animates a `blur` filter alongside an element's opacity.
