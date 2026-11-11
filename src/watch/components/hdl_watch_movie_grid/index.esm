@@ -6,6 +6,7 @@ import { searchModes, WATCHED_WKSP, WATCHING_WKSP } from '../../lib/constants.js
 import '../hdl_watch_detailed_view/index.esm'
 
 const ACTION_HIDE_DELAY = 3000
+const DRAG_SHIFTING_POSTERS_SELECTOR = '.drag-target:not(.drag-source), .drag-target ~ .grid-poster:not(.drag-source)'
 
 const log = logger.getLogger('layout/watch/component/watch_movie_grid')
 const { joi, matchMedia } = window
@@ -210,7 +211,7 @@ const MovieGrid = juris.createWebComponent(
             const posters = [...shadowRoot.querySelectorAll('.movie-grid > .grid-poster')]
 
             const updates = posters.toSorted(
-              ({ style: { order: a } }, { style: { order: b } }) => a.localeCompare(b)
+              ({ style: { order: a } }, { style: { order: b } }) => parseInt(a, 10) - parseInt(b, 10)
             )
               .map(poster => poster.getAttribute('id'))
 
@@ -340,14 +341,14 @@ const MovieGrid = juris.createWebComponent(
                             const relativeX = clientX - targetX
                             const isLastDropzone = index + 1 === items.length && relativeX >= targetWidth * 0.75
 
-                            // eslint-disable-next-line eqeqeq
-                            const shouldUpdate = isLastDropzone || dragPoster.style.order != index - 1
+                            const currentTargetPosition = index - 1
+                            const targetPositionChanged = parseInt(dragPoster.style.order, 10) !== currentTargetPosition
+                            const shouldUpdate = isLastDropzone || targetPositionChanged
 
                             if (shouldUpdate) {
                               if (!isLastDropzone) {
                                 const followingPosters =
-                                  [...shadowRoot.querySelectorAll('.drag-target, .drag-target ~ .grid-poster')]
-                                    .filter(poster => poster !== dragPoster)
+                                  [...shadowRoot.querySelectorAll(DRAG_SHIFTING_POSTERS_SELECTOR)]
 
                                 for (const [position, poster] of followingPosters.entries()) {
                                   poster.style.order = index + position + 1
@@ -425,14 +426,14 @@ const MovieGrid = juris.createWebComponent(
                             const isLastDropzone = dragTarget.matches('.last')
                             const dragTargetIndex = parseInt(dragTarget.style.order)
 
-                            // eslint-disable-next-line eqeqeq
-                            const shouldUpdate = isLastDropzone || dragPoster.style.order != dragTargetIndex - 1
+                            const currentTargetPosition = dragTargetIndex - 1
+                            const targetPositionChanged = parseInt(dragPoster.style.order, 10) !== currentTargetPosition
+                            const shouldUpdate = isLastDropzone || targetPositionChanged
 
                             if (shouldUpdate) {
                               if (!isLastDropzone) {
                                 const followingPosters =
-                                  [...shadowRoot.querySelectorAll('.drag-target, .drag-target ~ .grid-poster')]
-                                    .filter(poster => poster !== dragPoster)
+                                  [...shadowRoot.querySelectorAll(DRAG_SHIFTING_POSTERS_SELECTOR)]
 
                                 for (const [position, poster] of followingPosters.entries()) {
                                   poster.style.order = dragTargetIndex + position + 1

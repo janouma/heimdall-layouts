@@ -367,6 +367,48 @@ test('poster reordering to last position', async ({ page }) => {
   return expect(movieGrid).toHaveScreenshot(getScreenshotPath('reordered-last'))
 })
 
+test('posters reordering beyond ten posters', async ({ page }) => {
+  // enough posters for their order to reach two digits
+  const manyItems = fixtureItems.slice(0, 12)
+
+  await page.goto(getComponentUrl({ params: { items: manyItems } }))
+
+  await setLayoutState(page, {
+    itemType: 'movie',
+    searchMode: 'find',
+    selectedPlaylist: 'rewatch'
+  })
+
+  await expectPostersLoaded(page, manyItems.length)
+
+  const sentConfigs = []
+
+  await page.route('/api/set-config/watch', route => {
+    sentConfigs.push(route.request().postDataJSON())
+    return route.fulfill({ json: {} })
+  })
+
+  const target = getPoster(page, 'high_to_lowest')
+  const { height } = await target.boundingBox()
+
+  await dragPosterTo(getPoster(page, 'dracula'), target, { y: height - 5 })
+  await page.mouse.up()
+
+  // the rendered order is numeric whatever the case: only the saved playlist
+  // shows the posters ordered past nine sorted as numbers rather than as text
+  await expect.poll(() => sentConfigs).toEqual([{
+    playlists: {
+      rewatch: {
+        movie: [
+          'vanished',
+          'dracula',
+          ...manyItems.slice(2).map(({ $id }) => $id)
+        ]
+      }
+    }
+  }])
+})
+
 test('reordering failure', async ({ page }) => {
   await page.goto(getComponentUrl({ params: { items } }))
 
